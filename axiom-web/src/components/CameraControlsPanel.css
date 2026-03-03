@@ -1,0 +1,87 @@
+.camera-controls-panel {
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 16px;
+  color: #e0e0e0;
+}
+
+.camera-controls-panel h3 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.control-hint {
+  background-color: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.control-hint p {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  color: #a0a0a0;
+  font-weight: 500;
+}
+
+.control-hint ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 11px;
+  color: #c0c0c0;
+}
+
+.control-hint li {
+  margin: 4px 0;
+}
+
+.control-hint strong {
+  color: #e0e0e0;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.control-btn {
+  background-color: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: #e0e0e0;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.control-btn:hover {
+  background-color: #3a3a3a;
+  border-color: #4a4a4a;
+  transform: translateY(-1px);
+}
+
+.control-btn:active {
+  transform: translateY(0);
+}
+
+.fit-btn:hover {
+  background-color: #1565C0;
+  border-color: #1976D2;
+  color: #ffffff;
+}
+
+.reset-btn:hover {
+  background-color: #5D4037;
+  border-color: #6D4C41;
+  color: #ffffff;
+}

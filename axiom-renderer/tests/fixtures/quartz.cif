@@ -1,0 +1,27 @@
+data_quartz
+_chemical_name_mineral 'Quartz'
+_chemical_formula_sum 'Si3 O6'
+_cell_length_a    4.916
+_cell_length_b    4.916
+_cell_length_c    5.405
+_cell_angle_alpha 90.0
+_cell_angle_beta  90.0
+_cell_angle_gamma 120.0
+_space_group_name_H-M_alt 'P 32 2 1'
+
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+_atom_site_occupancy
+Si1 Si 0.4697 0.0000 0.3333 1.0
+Si2 Si 0.0000 0.4697 0.6667 1.0
+Si3 Si 0.5303 0.5303 0.0000 1.0
+O1  O  0.4135 0.2672 0.2144 1.0
+O2  O  0.2672 0.4135 0.5478 1.0
+O3  O  0.7328 0.1463 0.4522 1.0
+O4  O  0.1463 0.7328 0.7856 1.0
+O5  O  0.5865 0.8537 0.1189 1.0
+O6  O  0.8537 0.5865 0.8811 1.0

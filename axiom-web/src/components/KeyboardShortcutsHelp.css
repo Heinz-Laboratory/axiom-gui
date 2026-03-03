@@ -1,0 +1,206 @@
+/* axiom-web/src/components/KeyboardShortcutsHelp.css */
+/* Professional 2026 styling for keyboard shortcuts dialog */
+
+/* Overlay - backdrop blur with dark background */
+.keyboard-shortcuts-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Dialog container */
+.keyboard-shortcuts-dialog {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease-out;
+  outline: none;
+}
+
+/* Header */
+.shortcuts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #333;
+  position: sticky;
+  top: 0;
+  background: #1e1e1e;
+  z-index: 1;
+}
+
+.shortcuts-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #fff;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-weight: 600;
+}
+
+/* Close button */
+.close-button {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #aaa;
+  cursor: pointer;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+  line-height: 1;
+}
+
+.close-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.close-button:focus {
+  outline: 2px solid #4CAF50;
+  outline-offset: 2px;
+}
+
+/* Category sections */
+.shortcut-category {
+  padding: 1.5rem;
+  border-bottom: 1px solid #333;
+}
+
+.shortcut-category:last-child {
+  border-bottom: none;
+}
+
+.shortcut-category h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-weight: 500;
+}
+
+/* Shortcut list */
+.shortcut-category ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.shortcut-category li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.shortcut-keys {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+/* Keyboard key styling */
+kbd {
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  font-size: 0.9rem;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  min-width: 1.5rem;
+  text-align: center;
+  display: inline-block;
+}
+
+.shortcut-description {
+  color: #aaa;
+  margin-left: 1rem;
+  flex-grow: 1;
+  text-align: right;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .keyboard-shortcuts-overlay,
+  .keyboard-shortcuts-dialog {
+    animation: none;
+  }
+}
+
+/* Custom scrollbar for dialog */
+.keyboard-shortcuts-dialog::-webkit-scrollbar {
+  width: 8px;
+}
+
+.keyboard-shortcuts-dialog::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.keyboard-shortcuts-dialog::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+.keyboard-shortcuts-dialog::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

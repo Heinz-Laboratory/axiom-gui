@@ -1,0 +1,15 @@
+
+> axiom-web@0.0.0 build
+> tsc -b && vite build
+
+vite v7.3.1 building client environment for production...
+transforming...
+✓ 58 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                0.65 kB │ gzip:   0.37 kB
+dist/assets/axiom_renderer_bg-DhDayzKq.wasm  357.20 kB │ gzip: 148.00 kB
+dist/assets/index-B0IS1uPU.css                20.20 kB │ gzip:   4.35 kB
+dist/assets/vendor-C6WxKkic.js                15.04 kB │ gzip:   4.49 kB
+dist/assets/index-Dpp9KbKn.js                366.15 kB │ gzip:  87.81 kB
+✓ built in 6.67s

@@ -1,0 +1,40 @@
+data_crambin
+_chemical_name 'Crambin (minimal sample)'
+_chemical_formula_sum 'C202 H315 N55 O64 S6'
+_cell_length_a    40.96
+_cell_length_b    18.65
+_cell_length_c    22.52
+_cell_angle_alpha 90.0
+_cell_angle_beta  90.47
+_cell_angle_gamma 90.0
+
+# This is a minimal subset showing first 20 atoms of crambin (PDB 1CRN)
+# Full structure has 642 atoms
+
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+_atom_site_occupancy
+N1   N  0.0902 0.1367 0.1506 1.0
+CA1  C  0.0878 0.1489 0.0917 1.0
+C1   C  0.0544 0.1250 0.0653 1.0
+O1   O  0.0357 0.0817 0.0889 1.0
+CB1  C  0.0930 0.2278 0.0806 1.0
+CG1  C  0.1306 0.2500 0.0889 1.0
+CD1  C  0.1361 0.3194 0.0750 1.0
+CE1  C  0.1722 0.3444 0.0833 1.0
+NZ1  N  0.1778 0.4111 0.0694 1.0
+N2   N  0.0472 0.1556 0.0222 1.0
+CA2  C  0.0139 0.1417 -0.0042 1.0
+C2   C  0.0194 0.0700 -0.0306 1.0
+O2   O  0.0472 0.0250 -0.0222 1.0
+CB2  C  -0.0194 0.1472 0.0333 1.0
+CG2  C  -0.0333 0.2194 0.0472 1.0
+CD2  C  -0.0667 0.2250 0.0847 1.0
+N3   N  -0.0056 0.0556 -0.0667 1.0
+CA3  C  -0.0056 -0.0111 -0.0944 1.0
+C3   C  -0.0417 -0.0111 -0.1250 1.0
+O3   O  -0.0694 0.0306 -0.1194 1.0

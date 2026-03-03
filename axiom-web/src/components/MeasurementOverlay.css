@@ -1,0 +1,42 @@
+/* MeasurementOverlay.css - Styling for SVG measurement overlay */
+
+.measurement-overlay {
+  /* Positioned absolutely over the canvas */
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none; /* Allow clicks to pass through to canvas */
+  z-index: 50;
+}
+
+/* Text shadow for better visibility against various backgrounds */
+.measurement-overlay text {
+  paint-order: stroke fill;
+  stroke: rgba(0, 0, 0, 0.8);
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Smooth animations for measurement appearance */
+.measurement-overlay g {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Hover effects for interactive feel (even though overlay is non-interactive) */
+.measurement-overlay line {
+  transition: stroke-width 0.2s;
+}
+
+.measurement-overlay circle {
+  transition: r 0.2s;
+}

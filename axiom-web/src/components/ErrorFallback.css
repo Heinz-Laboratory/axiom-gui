@@ -1,0 +1,157 @@
+/* Error Fallback Styles */
+.error-fallback {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a1a;
+  padding: 20px;
+}
+
+.error-fallback__content {
+  max-width: 600px;
+  width: 100%;
+  background: #2a2a2a;
+  border: 2px solid #f44336;
+  border-radius: 8px;
+  padding: 32px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.error-fallback__icon {
+  font-size: 48px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.error-fallback__title {
+  color: #f44336;
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  text-align: center;
+}
+
+.error-fallback__message {
+  color: #e0e0e0;
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+  text-align: center;
+}
+
+/* Error details (development only) */
+.error-fallback__details {
+  background: #1a1a1a;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.error-fallback__details summary {
+  color: #e0e0e0;
+  cursor: pointer;
+  font-weight: 500;
+  user-select: none;
+}
+
+.error-fallback__details summary:hover {
+  color: #fff;
+}
+
+.error-fallback__error-info {
+  margin-top: 12px;
+}
+
+.error-fallback__error-info p {
+  color: #e0e0e0;
+  font-size: 14px;
+  margin: 8px 0;
+}
+
+.error-fallback__stack {
+  background: #0a0a0a;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  padding: 12px;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.error-fallback__stack code {
+  color: #ff6b6b;
+  font-family: 'Courier New', monospace;
+}
+
+/* Action buttons */
+.error-fallback__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.error-fallback__button {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  display: inline-block;
+}
+
+.error-fallback__button:hover {
+  transform: translateY(-1px);
+}
+
+.error-fallback__button:active {
+  transform: translateY(0);
+}
+
+.error-fallback__button--primary {
+  background: #4CAF50;
+  color: #fff;
+}
+
+.error-fallback__button--primary:hover {
+  background: #45a049;
+}
+
+.error-fallback__button--secondary {
+  background: #3a3a3a;
+  color: #e0e0e0;
+}
+
+.error-fallback__button--secondary:hover {
+  background: #4a4a4a;
+}
+
+/* Focus styles for accessibility */
+.error-fallback__button:focus-visible {
+  outline: 2px solid #2196F3;
+  outline-offset: 2px;
+}
+
+/* Responsive design */
+@media (max-width: 767px) {
+  .error-fallback__content {
+    padding: 24px;
+  }
+
+  .error-fallback__title {
+    font-size: 20px;
+  }
+
+  .error-fallback__actions {
+    flex-direction: column;
+  }
+
+  .error-fallback__button {
+    width: 100%;
+  }
+}

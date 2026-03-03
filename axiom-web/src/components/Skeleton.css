@@ -1,0 +1,91 @@
+/* Skeleton Loader Styles */
+.skeleton {
+  display: block;
+  background: linear-gradient(90deg, #2a2a2a 0%, #3a3a3a 50%, #2a2a2a 100%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Variants */
+.skeleton--text {
+  margin-bottom: 0.5em;
+  border-radius: 4px;
+  transform: scale(1, 0.6);
+  transform-origin: 0 center;
+}
+
+.skeleton--circular {
+  border-radius: 50%;
+}
+
+.skeleton--rectangular {
+  border-radius: 4px;
+}
+
+/* Animations */
+.skeleton--wave {
+  animation: skeleton-wave 1.5s ease-in-out infinite;
+}
+
+.skeleton--pulse {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-wave {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes skeleton-pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Respect user preferences for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton--wave,
+  .skeleton--pulse {
+    animation: none;
+    /* Use subtle opacity instead */
+    opacity: 0.7;
+  }
+}
+
+/* Screen reader only text */
+.skeleton__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Skeleton text block */
+.skeleton-text {
+  width: 100%;
+}
+
+.skeleton-text .skeleton {
+  margin-bottom: 0.75em;
+}
+
+.skeleton-text .skeleton:last-child {
+  margin-bottom: 0;
+}

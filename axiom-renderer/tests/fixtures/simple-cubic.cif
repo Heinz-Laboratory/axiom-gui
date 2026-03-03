@@ -1,0 +1,24 @@
+data_simple_cubic
+_cell_length_a    5.43
+_cell_length_b    5.43
+_cell_length_c    5.43
+_cell_angle_alpha 90.0
+_cell_angle_beta  90.0
+_cell_angle_gamma 90.0
+_chemical_formula_sum 'Si8'
+
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+_atom_site_occupancy
+Si1 Si 0.0 0.0 0.0 1.0
+Si2 Si 0.5 0.5 0.0 1.0
+Si3 Si 0.5 0.0 0.5 1.0
+Si4 Si 0.0 0.5 0.5 1.0
+Si5 Si 0.25 0.25 0.25 1.0
+Si6 Si 0.75 0.75 0.25 1.0
+Si7 Si 0.75 0.25 0.75 1.0
+Si8 Si 0.25 0.75 0.75 1.0

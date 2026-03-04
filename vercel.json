@@ -1,0 +1,27 @@
+{
+  "buildCommand": "bash build-wasm.sh",
+  "outputDirectory": "axiom-web/dist",
+  "installCommand": "echo 'Using custom buildCommand'",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "require-corp"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        }
+      ]
+    }
+  ]
+}

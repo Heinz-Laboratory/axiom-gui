@@ -1,14 +1,27 @@
-# Axiom GUI - Desktop Application
+# Axiom GUI
 
-**Tauri-based desktop application for Axiom molecular visualization**
+**Molecular visualization platform with web and desktop applications**
+
+## Live Demo
+
+**Web App**: https://axiom-gui.vercel.app
 
 ## Overview
 
-This is the Phase 4 GUI component of Axiom - a desktop application built with:
+Axiom GUI provides both web and desktop interfaces for molecular visualization:
+
+### Web Application
+- **Frontend:** React 18 + TypeScript + Vite
+- **Rendering:** WebGPU + wgpu-WASM
+- **Deployment:** Vercel (production)
+- **Source:** Root directory (`/`)
+
+### Desktop Application
 - **Backend:** Rust + Tauri 2.x
 - **Frontend:** React 18 + TypeScript + Vite
 - **UI:** Radix UI + Tailwind CSS
 - **State:** Zustand
+- **Source:** `src-tauri/` directory
 
 ## Prerequisites
 
@@ -235,6 +248,40 @@ See [PHASE4_GUI_PLAN.md](../PHASE4_GUI_PLAN.md) for detailed architecture docume
 ## Contributing
 
 This project is part of the Axiom molecular visualization platform. For contributing guidelines, see the main Axiom README.
+
+## Deployment
+
+### Web App (Vercel)
+
+The web application is deployed to Vercel with automatic CI/CD:
+
+**Production URL:** https://axiom-gui.vercel.app
+
+**Deploy manually:**
+```bash
+# Ensure Vercel CLI is installed
+npm install -g vercel
+
+# Deploy to production
+cd ~/repos/axiom-gui
+vercel --prod --scope heinzlabs-projects
+```
+
+**Vercel configuration:**
+- Project: heinzlabs-projects/axiom-gui
+- Build command: `npm run build` (runs Vite build)
+- Output directory: `dist/`
+- Framework preset: Vite
+
+### Desktop App
+
+Desktop builds are created manually for each platform:
+
+```bash
+npm run tauri build
+```
+
+See the Desktop Application section above for platform-specific build outputs.
 
 ## License
 

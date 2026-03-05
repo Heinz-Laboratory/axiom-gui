@@ -11,14 +11,24 @@ pub struct RenderContext {
 impl RenderContext {
     #[cfg(target_arch = "wasm32")]
     pub async fn new_for_canvas(canvas: web_sys::HtmlCanvasElement) -> Result<Self, String> {
-        // WebGPU backend initialization
+        use web_sys::console;
+
+        // Try WebGPU first, fallback to WebGL2 if not available
+        console::log_1(&"Axiom Renderer: Initializing graphics backend...".into());
+
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::BROWSER_WEBGPU,
+            backends: wgpu::Backends::BROWSER_WEBGPU | wgpu::Backends::GL,
             ..Default::default()
         });
 
         let surface = instance.create_surface(wgpu::SurfaceTarget::Canvas(canvas.clone()))
-            .map_err(|e| format!("Failed to create surface: {:?}", e))?;
+            .map_err(|e| {
+                let msg = format!("Failed to create surface: {:?}", e);
+                console::error_1(&msg.clone().into());
+                msg
+            })?;
+
+        console::log_1(&"Surface created successfully".into());
 
         let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,
@@ -26,7 +36,18 @@ impl RenderContext {
             force_fallback_adapter: false,
         })
         .await
-        .ok_or("Failed to find GPU adapter")?;
+        .ok_or_else(|| {
+            let msg = "Failed to find GPU adapter. Your browser may not support WebGPU or WebGL2.";
+            console::error_1(&msg.into());
+            msg.to_string()
+        })?;
+
+        let adapter_info = adapter.get_info();
+        console::log_1(&format!(
+            "GPU Adapter: {} (backend: {:?})",
+            adapter_info.name,
+            adapter_info.backend
+        ).into());
 
         let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor {
             label: Some("axiom-renderer-device"),
@@ -34,7 +55,13 @@ impl RenderContext {
             required_limits: wgpu::Limits::downlevel_webgl2_defaults(),
         }, None)
         .await
-        .map_err(|e| format!("Failed to create device: {:?}", e))?;
+        .map_err(|e| {
+            let msg = format!("Failed to create device: {:?}", e);
+            console::error_1(&msg.clone().into());
+            msg
+        })?;
+
+        console::log_1(&"Device and queue created successfully".into());
 
         let size = (canvas.width(), canvas.height());
         let surface_caps = surface.get_capabilities(&adapter);
@@ -49,6 +76,11 @@ impl RenderContext {
             desired_maximum_frame_latency: 2,
         };
         surface.configure(&device, &surface_config);
+
+        console::log_1(&format!(
+            "✅ Renderer initialized successfully ({}x{}, format: {:?})",
+            size.0, size.1, surface_config.format
+        ).into());
 
         Ok(Self {
             device,

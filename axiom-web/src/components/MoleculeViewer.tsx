@@ -265,7 +265,9 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
         animate()
       } catch (err) {
         if (mounted) {
-          setError(err instanceof Error ? err.message : 'Failed to initialize renderer')
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          console.error('Renderer initialization failed:', errorMessage, err);
+          setError(errorMessage || 'Failed to initialize renderer')
           setIsLoading(false)
         }
       }

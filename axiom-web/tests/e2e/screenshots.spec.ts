@@ -24,7 +24,7 @@ test.use({
 });
 
 const SCREENSHOT_DIR = path.join(__dirname, '..', '..', 'docs', 'screenshots');
-const PRODUCTION_URL = 'https://heinz-laboratory.github.io/axiom-gui/';
+const PRODUCTION_URL = 'https://axiom-gui.vercel.app/';
 
 test.describe('Documentation Screenshots', () => {
 

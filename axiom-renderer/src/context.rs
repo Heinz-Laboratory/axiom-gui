@@ -49,14 +49,16 @@ impl RenderContext {
             adapter_info.backend
         ).into());
 
-        // CRITICAL FIX: Don't specify limits at all - let the browser decide
-        // wgpu 0.19's downlevel_webgl2_defaults() includes maxInterStageShaderComponents
-        // which Chrome doesn't support yet. By passing default(), wgpu will negotiate
-        // with the browser and only use supported limits.
+        // CRITICAL FIX: Request device with MINIMAL limits
+        // wgpu 0.19 includes new limit fields that Chrome WebGPU doesn't support yet
+        // Solution: Use the adapter's own limits (what IT supports) as our requirements
+        let adapter_limits = adapter.limits();
+        console::log_1(&format!("Using adapter limits: {:?}", adapter_limits).into());
+
         let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor {
             label: Some("axiom-renderer-device"),
             required_features: wgpu::Features::empty(),
-            required_limits: wgpu::Limits::default(),  // Let browser decide what's supported
+            required_limits: adapter_limits,  // Use what the adapter actually supports
         }, None)
         .await
         .map_err(|e| {

@@ -13,11 +13,12 @@ impl RenderContext {
     pub async fn new_for_canvas(canvas: web_sys::HtmlCanvasElement) -> Result<Self, String> {
         use web_sys::console;
 
-        // Try WebGPU first, fallback to WebGL2 if not available
-        console::log_1(&"Axiom Renderer: Initializing graphics backend...".into());
+        // CRITICAL FIX: Use WebGL ONLY (not WebGPU) to avoid Chrome limits incompatibility
+        // wgpu 0.19 Limits includes fields that Chrome's WebGPU doesn't support yet
+        console::log_1(&"Axiom Renderer: Initializing with WebGL2 backend...".into());
 
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::BROWSER_WEBGPU | wgpu::Backends::GL,
+            backends: wgpu::Backends::GL,  // Use ONLY WebGL, not WebGPU
             ..Default::default()
         });
 
@@ -49,15 +50,14 @@ impl RenderContext {
             adapter_info.backend
         ).into());
 
-        // CRITICAL FIX: Use adapter.limits() to request ONLY what the adapter actually supports
-        // This avoids passing unsupported limit fields like maxInterStageShaderComponents
-        // that wgpu 0.19 includes but Chrome's WebGPU doesn't recognize yet.
-        console::log_1(&"Requesting device with adapter-supported limits".into());
+        // CRITICAL FIX: Use downlevel_webgl2_defaults() for maximum browser compatibility
+        // wgpu 0.18 has stable Limits that work with current Chrome WebGPU implementation
+        console::log_1(&"Requesting device with WebGL2-compatible limits".into());
 
         let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor {
             label: Some("axiom-renderer-device"),
             required_features: wgpu::Features::empty(),
-            required_limits: adapter.limits(),  // Use ONLY what the adapter says it supports
+            required_limits: wgpu::Limits::downlevel_webgl2_defaults(),
         }, None)
         .await
         .map_err(|e| {

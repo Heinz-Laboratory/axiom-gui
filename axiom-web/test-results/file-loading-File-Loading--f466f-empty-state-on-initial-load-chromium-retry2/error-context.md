@@ -1,0 +1,117 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - link "Skip to main content" [ref=e3] [cursor=pointer]:
+    - /url: "#main-content"
+  - main [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - generic [ref=e8]: Axiom Web Viewer
+          - button "?" [ref=e9] [cursor=pointer]
+        - generic [ref=e10]:
+          - generic [ref=e11]: Sample Structures
+          - button "Load example structure ▼" [ref=e12] [cursor=pointer]:
+            - generic [ref=e13]: Load example structure
+            - generic [ref=e14]: ▼
+        - generic [ref=e15]:
+          - generic [ref=e16] [cursor=pointer]:
+            - generic [ref=e17]: 📁
+            - generic [ref=e18]: Drag & drop CIF file
+            - generic [ref=e19]: or click to browse
+          - generic [ref=e20]: "Supported: .cif • Max size: 10 MB"
+        - generic [ref=e21]: No structure loaded
+        - generic [ref=e22]:
+          - heading "Rendering Settings" [level=2] [ref=e23]
+          - generic [ref=e24]:
+            - heading "▼ Render Style" [level=3] [ref=e25] [cursor=pointer]
+            - generic [ref=e26]:
+              - generic [ref=e27] [cursor=pointer]:
+                - radio "Ball & Stick" [checked] [ref=e28]
+                - text: Ball & Stick
+              - generic [ref=e29] [cursor=pointer]:
+                - radio "Spacefill" [ref=e30]
+                - text: Spacefill
+              - generic [ref=e31] [cursor=pointer]:
+                - radio "Stick" [ref=e32]
+                - text: Stick
+              - generic [ref=e33] [cursor=pointer]:
+                - radio "Wireframe" [ref=e34]
+                - text: Wireframe
+          - generic [ref=e35]:
+            - heading "▼ Quality" [level=3] [ref=e36] [cursor=pointer]
+            - generic [ref=e37]:
+              - generic [ref=e38] [cursor=pointer]:
+                - radio "Draft (Fast)" [ref=e39]
+                - text: Draft (Fast)
+              - generic [ref=e40] [cursor=pointer]:
+                - radio "Good (Balanced)" [checked] [ref=e41]
+                - text: Good (Balanced)
+              - generic [ref=e42] [cursor=pointer]:
+                - radio "Best (High Quality)" [ref=e43]
+                - text: Best (High Quality)
+              - generic [ref=e44] [cursor=pointer]:
+                - radio "Custom" [ref=e45]
+                - text: Custom
+          - generic [ref=e46]:
+            - heading "▼ Lighting" [level=3] [ref=e47] [cursor=pointer]
+            - generic [ref=e48]:
+              - generic [ref=e49]:
+                - generic [ref=e50]: "Ambient: 30%"
+                - 'slider "Ambient: 30%" [ref=e51]': "30"
+              - generic [ref=e52]:
+                - generic [ref=e53]: "Diffuse: 70%"
+                - 'slider "Diffuse: 70%" [ref=e54]': "70"
+              - generic [ref=e55]:
+                - generic [ref=e56]: "Specular: 50%"
+                - 'slider "Specular: 50%" [ref=e57]': "50"
+              - button "Reset Defaults" [ref=e58] [cursor=pointer]
+          - generic [ref=e59]:
+            - heading "▼ Background" [level=3] [ref=e60] [cursor=pointer]
+            - generic [ref=e61]:
+              - button "Set background to White" [ref=e62] [cursor=pointer]
+              - button "Set background to Black" [ref=e63] [cursor=pointer]
+              - button "Set background to Gray" [ref=e64] [cursor=pointer]
+              - button "Set background to Light Blue" [ref=e65] [cursor=pointer]
+              - button "Set background to Dark Blue" [ref=e66] [cursor=pointer]
+              - textbox "Custom color" [ref=e67] [cursor=pointer]: "#ffffff"
+          - button "Reset All to Defaults" [ref=e68] [cursor=pointer]
+        - generic [ref=e69]:
+          - heading "Camera Presets" [level=3] [ref=e70]
+          - generic [ref=e71]:
+            - 'button "Camera preset: Front" [ref=e72] [cursor=pointer]':
+              - generic [ref=e73]: ⬆️
+              - generic [ref=e74]: Front
+            - 'button "Camera preset: Back" [ref=e75] [cursor=pointer]':
+              - generic [ref=e76]: ⬇️
+              - generic [ref=e77]: Back
+            - 'button "Camera preset: Left" [ref=e78] [cursor=pointer]':
+              - generic [ref=e79]: ⬅️
+              - generic [ref=e80]: Left
+            - 'button "Camera preset: Right" [ref=e81] [cursor=pointer]':
+              - generic [ref=e82]: ➡️
+              - generic [ref=e83]: Right
+            - 'button "Camera preset: Top" [ref=e84] [cursor=pointer]':
+              - generic [ref=e85]: ⏫
+              - generic [ref=e86]: Top
+            - 'button "Camera preset: Bottom" [ref=e87] [cursor=pointer]':
+              - generic [ref=e88]: ⏬
+              - generic [ref=e89]: Bottom
+          - button "+ Save Current View" [ref=e91] [cursor=pointer]
+        - generic [ref=e92]:
+          - heading "Camera Controls" [level=3] [ref=e93]
+          - generic [ref=e94]:
+            - paragraph [ref=e95]: "Use mouse to control camera:"
+            - list [ref=e96]:
+              - listitem [ref=e97]:
+                - strong [ref=e98]: Drag
+                - text: "- Rotate view"
+              - listitem [ref=e99]:
+                - strong [ref=e100]: Scroll
+                - text: "- Zoom in/out"
+          - generic [ref=e101]:
+            - button "🎯 Fit to View" [ref=e102] [cursor=pointer]
+            - button "🔄 Reset" [ref=e103] [cursor=pointer]
+      - 'generic "3D molecular visualization canvas. Click to select atoms. Drag to rotate. Scroll to zoom. On touch devices: drag with one finger to rotate, pinch with two fingers to zoom." [ref=e104] [cursor=pointer]'
+```

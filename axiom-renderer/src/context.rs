@@ -58,7 +58,7 @@ impl RenderContext {
         let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor {
             label: Some("axiom-renderer-device"),
             required_features: wgpu::Features::empty(),
-            required_limits: wgpu::Limits::downlevel_defaults(),  // Most conservative limits
+            required_limits: Default::default(),  // Let wgpu/browser negotiate supported limits
         }, None)
         .await
         .map_err(|e| {

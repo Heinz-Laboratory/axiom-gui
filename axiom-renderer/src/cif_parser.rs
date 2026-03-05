@@ -97,6 +97,9 @@ pub fn parse_cif(input: &str) -> Result<CifStructure, CifError> {
 
             // Check if this is an atom_site loop
             if loop_headers.iter().any(|h| h.contains("atom_site")) {
+                #[cfg(target_arch = "wasm32")]
+                web_sys::console::log_1(&format!("Found atom_site loop with {} headers", loop_headers.len()).into());
+
                 // Parse data rows
                 while let Some(data_line) = lines.peek() {
                     let data_trimmed = data_line.trim();
@@ -123,6 +126,9 @@ pub fn parse_cif(input: &str) -> Result<CifStructure, CifError> {
 
                     lines.next();
                 }
+
+                #[cfg(target_arch = "wasm32")]
+                web_sys::console::log_1(&format!("Parsed {} atom_site rows", atom_site_data.len()).into());
             }
         }
         // Handle single-value fields
@@ -177,11 +183,23 @@ fn parse_atoms(
 ) -> Result<Vec<Atom>, CifError> {
     let mut atoms = Vec::new();
 
-    for row in atom_site_data {
+    #[cfg(target_arch = "wasm32")]
+    web_sys::console::log_1(&format!("parse_atoms called with {} rows", atom_site_data.len()).into());
+
+    for (i, row) in atom_site_data.iter().enumerate() {
+        #[cfg(target_arch = "wasm32")]
+        if i == 0 {
+            web_sys::console::log_1(&format!("Row 0 keys: {:?}", row.keys().collect::<Vec<_>>()).into());
+        }
+
         // Extract element symbol
         let element = row.get("_atom_site_type_symbol")
             .or_else(|| row.get("_atom_site_label"))
-            .ok_or_else(|| CifError::MissingField("_atom_site_type_symbol or _atom_site_label".to_string()))?
+            .ok_or_else(|| {
+                #[cfg(target_arch = "wasm32")]
+                web_sys::console::log_1(&format!("Row {} missing both _atom_site_type_symbol and _atom_site_label", i).into());
+                CifError::MissingField("_atom_site_type_symbol or _atom_site_label".to_string())
+            })?
             .clone();
 
         // Clean element symbol (remove oxidation states, site labels)

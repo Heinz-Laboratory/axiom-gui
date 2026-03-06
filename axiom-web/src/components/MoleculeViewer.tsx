@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react'
 import { initWasm, WasmRenderer } from '../wasm/axiom-renderer'
 import { FileUpload } from './FileUpload'
 import { StructureInfo } from './StructureInfo'
@@ -33,6 +33,12 @@ interface PickResult {
   atomIndex: number
   element?: string
   position?: [number, number, number]
+}
+
+interface PendingStructureLoad {
+  content: string
+  sourceName: string
+  displayName: string
 }
 
 const QUICK_RENDER_MODES = [
@@ -154,12 +160,14 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
   const [fileError, setFileError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingStructure, setIsLoadingStructure] = useState(false)
+  const [isRendererReady, setIsRendererReady] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [dragMode, setDragMode] = useState<DragMode>('rotate')
   const [statusMessage, setStatusMessage] = useState('Initializing WebGPU renderer...')
   const [structureData, setStructureData] = useState<StructureData | null>(null)
   const [filename, setFilename] = useState('')
   const [sourceName, setSourceName] = useState('')
+  const [pendingStructureLoad, setPendingStructureLoad] = useState<PendingStructureLoad | null>(null)
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null)
   const [isPinching, setIsPinching] = useState(false)
   const [initialPinchDistance, setInitialPinchDistance] = useState(0)
@@ -381,6 +389,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
 
         if (!mounted) return
 
+        setIsRendererReady(true)
         setIsLoading(false)
         setStatusMessage('Renderer ready')
 
@@ -400,6 +409,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
           const errorMessage = err instanceof Error ? err.message : String(err)
           console.error('Renderer initialization failed:', errorMessage, err)
           setError(errorMessage || 'Failed to initialize renderer')
+          setIsRendererReady(false)
           setIsLoading(false)
         }
       }
@@ -416,6 +426,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
         rendererRef.current.free()
         rendererRef.current = null
       }
+      setIsRendererReady(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -462,7 +473,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
     return () => canvas.removeEventListener('wheel', handleNativeWheel)
   }, [])
 
-  function handleFileLoad(content: string, sourceName: string, displayName = sourceName) {
+  const loadStructureFromContent = useCallback((content: string, sourceName: string, displayName = sourceName) => {
     if (!rendererRef.current) {
       setFileError('Renderer not initialized')
       return
@@ -503,7 +514,34 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
         setIsLoadingStructure(false)
       }
     }, 50)
-  }
+  }, [clearMeasurements, clearSelection])
+
+  const requestStructureLoad = useCallback((content: string, sourceName: string, displayName = sourceName) => {
+    const format = detectStructureFormat(sourceName)
+    if (!format) {
+      setFileError(`Invalid file type. Expected ${SUPPORTED_STRUCTURE_ACCEPT}`)
+      return
+    }
+
+    if (!isRendererReady || !rendererRef.current || isLoading) {
+      setPendingStructureLoad({ content, sourceName, displayName })
+      setFileError(null)
+      setStatusMessage(`Finishing renderer setup — queued ${displayName}`)
+      return
+    }
+
+    loadStructureFromContent(content, sourceName, displayName)
+  }, [isLoading, isRendererReady, loadStructureFromContent])
+
+  useEffect(() => {
+    if (!isRendererReady || !rendererRef.current || !pendingStructureLoad || isLoadingStructure) {
+      return
+    }
+
+    const nextLoad = pendingStructureLoad
+    setPendingStructureLoad(null)
+    loadStructureFromContent(nextLoad.content, nextLoad.sourceName, nextLoad.displayName)
+  }, [isLoadingStructure, isRendererReady, loadStructureFromContent, pendingStructureLoad])
 
   function handleShortcutFileSelection(file: File) {
     const format = detectStructureFormat(file.name)
@@ -516,7 +554,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
     reader.onload = (evt) => {
       const content = evt.target?.result as string
       if (content) {
-        handleFileLoad(content, file.name)
+        requestStructureLoad(content, file.name)
       }
     }
     reader.onerror = () => {
@@ -526,7 +564,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
   }
 
   function handleSampleLoad(content: string, displayName: string, sourcePath: string) {
-    handleFileLoad(content, sourcePath, displayName)
+    requestStructureLoad(content, sourcePath, displayName)
   }
 
   function handleMouseDown(e: React.MouseEvent<HTMLCanvasElement>) {
@@ -900,7 +938,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
           </section>
 
           <SampleFileDropdown onLoadSample={handleSampleLoad} />
-          <FileUpload onFileLoad={handleFileLoad} />
+          <FileUpload onFileLoad={requestStructureLoad} />
           <StructureInfo data={structureData} filename={filename} />
         </aside>
 

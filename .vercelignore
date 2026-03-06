@@ -1,0 +1,11 @@
+.git
+.github
+.vercel
+node_modules
+src-tauri/target
+visual-tests
+axiom-renderer/target
+axiom-web/node_modules
+axiom-web/dist
+axiom-web/playwright-report
+axiom-web/test-results

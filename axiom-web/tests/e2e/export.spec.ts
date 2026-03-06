@@ -47,6 +47,7 @@ test.describe('Export Functionality', () => {
 
   test('exports a 4k PNG snapshot', async ({ page }) => {
     const exportPanel = page.locator('.export-panel')
+    const resolutionSelect = exportPanel.locator('.export-options select').first()
     const fourKOption = exportPanel.locator('option[value="4k"]')
 
     if (await fourKOption.isDisabled()) {
@@ -54,7 +55,7 @@ test.describe('Export Functionality', () => {
       return
     }
 
-    await exportPanel.getByRole('combobox').selectOption('4k')
+    await resolutionSelect.selectOption('4k')
 
     const downloadPromise = page.waitForEvent('download')
     await page.getByRole('button', { name: /export png/i }).click()

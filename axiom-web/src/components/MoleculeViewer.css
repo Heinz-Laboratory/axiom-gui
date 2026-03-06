@@ -918,6 +918,28 @@
   color: var(--text-strong);
 }
 
+.axiom-error-screen__tips {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(43, 61, 80, 0.12);
+}
+
+.axiom-error-screen__tips h2 {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  color: var(--text-strong);
+}
+
+.axiom-error-screen__list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-muted);
+}
+
+.axiom-error-screen__list li + li {
+  margin-top: 8px;
+}
+
 .axiom-error-screen__eyebrow {
   font-size: 0.76rem;
   text-transform: uppercase;

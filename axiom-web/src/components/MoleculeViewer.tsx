@@ -147,6 +147,19 @@ function describeInspectorTab(tab: InspectorTab, hasStructure: boolean) {
   }
 }
 
+function detectBrowserLabel() {
+  if (typeof navigator === 'undefined') return 'browser'
+
+  const userAgent = navigator.userAgent
+  const braveNavigator = navigator as Navigator & { brave?: { isBrave?: () => Promise<boolean> } }
+  if (braveNavigator.brave) return 'Brave'
+  if (userAgent.includes('Edg/')) return 'Edge'
+  if (userAgent.includes('Chrome/')) return 'Chrome'
+  if (userAgent.includes('Firefox/')) return 'Firefox'
+  if (userAgent.includes('Safari/')) return 'Safari'
+  return 'browser'
+}
+
 export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: MoleculeViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rendererRef = useRef<WasmRenderer | null>(null)
@@ -163,7 +176,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
   const [isRendererReady, setIsRendererReady] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [dragMode, setDragMode] = useState<DragMode>('rotate')
-  const [statusMessage, setStatusMessage] = useState('Initializing WebGPU renderer...')
+  const [statusMessage, setStatusMessage] = useState('Initializing renderer...')
   const [structureData, setStructureData] = useState<StructureData | null>(null)
   const [filename, setFilename] = useState('')
   const [sourceName, setSourceName] = useState('')
@@ -172,6 +185,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
   const [isPinching, setIsPinching] = useState(false)
   const [initialPinchDistance, setInitialPinchDistance] = useState(0)
   const [activeInspectorTab, setActiveInspectorTab] = useState<InspectorTab>('render')
+  const browserLabel = useMemo(() => detectBrowserLabel(), [])
 
   const { settings, applyToRenderer, updateRenderMode } = useRenderSettings()
   const {
@@ -828,6 +842,24 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
     ]
   }, [structureData, structureFormatLabel])
 
+  const compatibilityTips = useMemo(() => {
+    if (!error || !/(WebGL|WebGPU|GPU adapter|graphics acceleration|surface)/i.test(error)) {
+      return []
+    }
+
+    const tips = [
+      browserLabel === 'Brave' ? 'Open brave://gpu and confirm WebGL/WebGL2 are enabled.' : 'Open your browser GPU diagnostics page and confirm WebGL/WebGL2 are enabled.',
+      'Keep hardware acceleration enabled, then restart the browser.',
+      'Try a fresh private or guest window with extensions and wallet injections disabled.',
+    ]
+
+    if (browserLabel === 'Brave') {
+      tips.splice(1, 0, 'Reduce Brave Shields or fingerprinting protections for this site if graphics APIs are being blocked.')
+    }
+
+    return tips
+  }, [browserLabel, error])
+
   if (error) {
     return (
       <div className="axiom-error-screen">
@@ -835,6 +867,16 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
           <p className="axiom-error-screen__eyebrow">Renderer error</p>
           <h1>Axiom could not initialize the scene.</h1>
           <p>{error}</p>
+          {compatibilityTips.length > 0 && (
+            <div className="axiom-error-screen__tips">
+              <h2>Compatibility checklist</h2>
+              <ul className="axiom-error-screen__list">
+                {compatibilityTips.map((tip) => (
+                  <li key={tip}>{tip}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     )

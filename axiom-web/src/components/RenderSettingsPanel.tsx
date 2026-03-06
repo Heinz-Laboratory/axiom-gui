@@ -184,14 +184,14 @@ export function RenderSettingsPanel() {
               <div className="sliders">
                 <label>
                   <span>SSAA: {settings.quality.ssaa}x</span>
-                  <input
-                    type="range"
-                    min="1"
-                    max="4"
-                    step="1"
+                  <select
                     value={settings.quality.ssaa}
                     onChange={(e) => handleCustomQualityChange(Number(e.target.value), undefined)}
-                  />
+                  >
+                    <option value="1">1x</option>
+                    <option value="2">2x</option>
+                    <option value="4">4x</option>
+                  </select>
                 </label>
                 <label>
                   <span>AO Samples: {settings.quality.aoSamples}</span>

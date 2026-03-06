@@ -18,21 +18,21 @@ test('loads samples and uploads on production without runtime failures', async (
   })
 
   await page.goto('/')
-  await expect(page.getByText('Axiom Web Viewer')).toBeVisible()
+  await expect(page.getByText('Axiom Molecular Workbench')).toBeVisible()
   await expect(page.locator('canvas')).toBeVisible()
   await expect(page.locator('body')).not.toContainText('Renderer Error')
 
   await page.getByRole('button', { name: /load example structure/i }).click()
-  await page.getByText('Water (H₂O)', { exact: true }).click()
-  await expect(page.locator('body')).toContainText('File: Water (H₂O)')
-  await expect(page.locator('body')).toContainText('Atoms: 3')
-  await expect(page.locator('body')).toContainText('Bonds: 2')
+  await page.getByText('Water (CIF)', { exact: true }).click()
+  await expect(page.getByTestId('structure-info')).toContainText('File: Water (CIF)')
+  await expect(page.getByTestId('structure-info')).toContainText(/Atoms:\s*3/)
+  await expect(page.getByTestId('structure-info')).toContainText(/Bonds:\s*2/)
   await expect(page.locator('body')).not.toContainText('Renderer Error')
 
   await page.locator('input[type="file"]').first().setInputFiles(quartzFixture)
-  await expect(page.locator('body')).toContainText('File: quartz.cif')
-  await expect(page.locator('body')).toContainText('Atoms: 9')
-  await expect(page.locator('body')).toContainText('Bonds: 6')
+  await expect(page.getByTestId('structure-info')).toContainText('File: quartz.cif')
+  await expect(page.getByTestId('structure-info')).toContainText(/Atoms:\s*9/)
+  await expect(page.getByTestId('structure-info')).toContainText(/Bonds:\s*6/)
   await expect(page.locator('body')).not.toContainText('Renderer Error')
 
   await page.screenshot({

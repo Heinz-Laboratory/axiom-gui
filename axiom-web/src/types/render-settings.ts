@@ -28,6 +28,10 @@ export interface LightingSettings {
   specular: number; // 0-100
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
 // Default settings matching backend defaults
 export const DEFAULT_RENDER_SETTINGS: RenderSettings = {
   renderMode: { type: 'ball-and-stick', atomScale: 1.0, bondRadius: 0.15 },
@@ -80,4 +84,87 @@ export function rgbaToHex(r: number, g: number, b: number): string {
     return clamped.toString(16).padStart(2, '0');
   };
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+}
+
+function normalizeRenderMode(value: unknown): RenderMode {
+  if (!isRecord(value) || typeof value.type !== 'string') {
+    return DEFAULT_RENDER_SETTINGS.renderMode
+  }
+
+  switch (value.type) {
+    case 'ball-and-stick':
+      if (typeof value.atomScale === 'number' && typeof value.bondRadius === 'number') {
+        return {
+          type: 'ball-and-stick',
+          atomScale: value.atomScale,
+          bondRadius: value.bondRadius,
+        }
+      }
+      break
+    case 'spacefill':
+      if (typeof value.vdwScale === 'number') {
+        return { type: 'spacefill', vdwScale: value.vdwScale }
+      }
+      break
+    case 'stick':
+      if (typeof value.atomRadius === 'number' && typeof value.bondRadius === 'number') {
+        return {
+          type: 'stick',
+          atomRadius: value.atomRadius,
+          bondRadius: value.bondRadius,
+        }
+      }
+      break
+    case 'wireframe':
+      if (typeof value.lineWidth === 'number') {
+        return { type: 'wireframe', lineWidth: value.lineWidth }
+      }
+      break
+  }
+
+  return DEFAULT_RENDER_SETTINGS.renderMode
+}
+
+function normalizeQualitySettings(value: unknown): QualitySettings {
+  const defaults = DEFAULT_RENDER_SETTINGS.quality
+  if (!isRecord(value)) {
+    return defaults
+  }
+
+  const preset =
+    value.preset === 'draft' || value.preset === 'good' || value.preset === 'best' || value.preset === 'custom'
+      ? value.preset
+      : defaults.preset
+  const ssaa = value.ssaa === 1 || value.ssaa === 2 || value.ssaa === 4 ? value.ssaa : defaults.ssaa
+  const aoSamples = typeof value.aoSamples === 'number' ? value.aoSamples : defaults.aoSamples
+
+  return { preset, ssaa, aoSamples }
+}
+
+function normalizeLightingSettings(value: unknown): LightingSettings {
+  const defaults = DEFAULT_RENDER_SETTINGS.lighting
+  if (!isRecord(value)) {
+    return defaults
+  }
+
+  return {
+    ambient: typeof value.ambient === 'number' ? value.ambient : defaults.ambient,
+    diffuse: typeof value.diffuse === 'number' ? value.diffuse : defaults.diffuse,
+    specular: typeof value.specular === 'number' ? value.specular : defaults.specular,
+  }
+}
+
+export function normalizeRenderSettings(value: unknown): RenderSettings {
+  const defaults = DEFAULT_RENDER_SETTINGS
+  if (!isRecord(value)) {
+    return defaults
+  }
+
+  return {
+    renderMode: normalizeRenderMode(value.renderMode),
+    quality: normalizeQualitySettings(value.quality),
+    lighting: normalizeLightingSettings(value.lighting),
+    backgroundColor:
+      typeof value.backgroundColor === 'string' ? value.backgroundColor : defaults.backgroundColor,
+  }
 }

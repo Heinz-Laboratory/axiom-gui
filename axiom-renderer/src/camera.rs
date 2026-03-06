@@ -3,6 +3,7 @@
 
 use glam::{Mat4, Vec3};
 
+#[derive(Clone, Debug)]
 pub struct Camera {
     pub eye: Vec3,
     pub target: Vec3,
@@ -72,6 +73,18 @@ impl Camera {
         if distance > 0.5 {
             self.eye = new_eye;
         }
+    }
+
+    pub fn pan(&mut self, delta_x: f32, delta_y: f32) {
+        let view_dir = (self.target - self.eye).normalize_or_zero();
+        let right = view_dir.cross(self.up).normalize_or_zero();
+        let up = self.up.normalize_or_zero();
+        let distance = (self.target - self.eye).length().max(1.0);
+        let scale = distance * 0.0025;
+        let translation = (-right * delta_x + up * delta_y) * scale;
+
+        self.eye += translation;
+        self.target += translation;
     }
 
     pub fn set_aspect(&mut self, aspect: f32) {

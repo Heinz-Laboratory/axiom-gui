@@ -1,9 +1,11 @@
-//! Molecular structure representation and bond detection
+//! Molecular structure representation and bond detection.
 //!
-//! Handles conversion of parsed CIF data to renderable molecular structures
-//! with automatic bond detection based on atomic distances.
+//! Converts parsed structures into renderable molecules and uses explicit bond
+//! data when available, falling back to covalent-radius bond detection.
 
-use crate::cif_parser::CifStructure;
+use std::collections::HashSet;
+
+use crate::structure::{Structure, StructureBond};
 
 /// A complete molecular structure ready for rendering
 #[derive(Debug, Clone)]
@@ -32,64 +34,48 @@ pub struct Bond {
     pub length: f32,
 }
 
-/// Element data for rendering (CPK colors and van der Waals radii)
 struct ElementData {
     color: [f32; 3],
     radius: f32,
 }
 
-/// Get CPK color and radius for an element symbol
 fn get_element_data(symbol: &str) -> ElementData {
     match symbol {
-        // Common elements with CPK colors
-        "H" => ElementData { color: [1.0, 1.0, 1.0], radius: 0.25 },      // White
-        "C" => ElementData { color: [0.5, 0.5, 0.5], radius: 0.70 },      // Gray
-        "N" => ElementData { color: [0.0, 0.0, 1.0], radius: 0.65 },      // Blue
-        "O" => ElementData { color: [1.0, 0.0, 0.0], radius: 0.60 },      // Red
-        "F" => ElementData { color: [0.0, 1.0, 0.0], radius: 0.50 },      // Green
-        "P" => ElementData { color: [1.0, 0.5, 0.0], radius: 1.00 },      // Orange
-        "S" => ElementData { color: [1.0, 1.0, 0.0], radius: 1.00 },      // Yellow
-        "Cl" => ElementData { color: [0.0, 1.0, 0.0], radius: 0.99 },     // Green
-        "Br" => ElementData { color: [0.6, 0.1, 0.0], radius: 1.14 },     // Dark red
-        "I" => ElementData { color: [0.5, 0.0, 0.5], radius: 1.33 },      // Purple
-
-        // Metals
-        "Fe" => ElementData { color: [0.9, 0.4, 0.0], radius: 1.26 },     // Orange
-        "Cu" => ElementData { color: [0.8, 0.5, 0.2], radius: 1.28 },     // Copper
-        "Zn" => ElementData { color: [0.5, 0.6, 0.7], radius: 1.34 },     // Blue-gray
-        "Mg" => ElementData { color: [0.0, 1.0, 0.0], radius: 1.60 },     // Green
-        "Ca" => ElementData { color: [0.5, 0.5, 0.5], radius: 1.97 },     // Gray
-        "Na" => ElementData { color: [0.0, 0.0, 1.0], radius: 1.86 },     // Blue
-        "K" => ElementData { color: [0.5, 0.0, 0.5], radius: 2.27 },      // Purple
-
-        // Heavy metals and actinides
-        "Pb" => ElementData { color: [0.34, 0.35, 0.38], radius: 1.75 },  // Dark gray
-        "Co" => ElementData { color: [0.0, 0.0, 0.6], radius: 1.26 },     // Dark blue
-
-        // Silicon and germanium (semiconductors)
-        "Si" => ElementData { color: [0.6, 0.6, 0.7], radius: 1.11 },     // Gray-blue
-        "Ge" => ElementData { color: [0.4, 0.6, 0.6], radius: 1.25 },     // Teal
-
-        // Noble gases
-        "He" => ElementData { color: [0.0, 1.0, 1.0], radius: 0.31 },     // Cyan
-        "Ne" => ElementData { color: [0.0, 1.0, 1.0], radius: 0.38 },     // Cyan
-        "Ar" => ElementData { color: [0.0, 1.0, 1.0], radius: 0.71 },     // Cyan
-
-        // Default for unknown elements
-        _ => ElementData { color: [1.0, 0.0, 1.0], radius: 1.00 },        // Magenta
+        "H" => ElementData { color: [1.0, 1.0, 1.0], radius: 0.25 },
+        "C" => ElementData { color: [0.5, 0.5, 0.5], radius: 0.70 },
+        "N" => ElementData { color: [0.0, 0.0, 1.0], radius: 0.65 },
+        "O" => ElementData { color: [1.0, 0.0, 0.0], radius: 0.60 },
+        "F" => ElementData { color: [0.0, 1.0, 0.0], radius: 0.50 },
+        "P" => ElementData { color: [1.0, 0.5, 0.0], radius: 1.00 },
+        "S" => ElementData { color: [1.0, 1.0, 0.0], radius: 1.00 },
+        "Cl" => ElementData { color: [0.0, 1.0, 0.0], radius: 0.99 },
+        "Br" => ElementData { color: [0.6, 0.1, 0.0], radius: 1.14 },
+        "I" => ElementData { color: [0.5, 0.0, 0.5], radius: 1.33 },
+        "Fe" => ElementData { color: [0.9, 0.4, 0.0], radius: 1.26 },
+        "Cu" => ElementData { color: [0.8, 0.5, 0.2], radius: 1.28 },
+        "Zn" => ElementData { color: [0.5, 0.6, 0.7], radius: 1.34 },
+        "Mg" => ElementData { color: [0.0, 1.0, 0.0], radius: 1.60 },
+        "Ca" => ElementData { color: [0.5, 0.5, 0.5], radius: 1.97 },
+        "Na" => ElementData { color: [0.0, 0.0, 1.0], radius: 1.86 },
+        "K" => ElementData { color: [0.5, 0.0, 0.5], radius: 2.27 },
+        "Pb" => ElementData { color: [0.34, 0.35, 0.38], radius: 1.75 },
+        "Co" => ElementData { color: [0.0, 0.0, 0.6], radius: 1.26 },
+        "Si" => ElementData { color: [0.6, 0.6, 0.7], radius: 1.11 },
+        "Ge" => ElementData { color: [0.4, 0.6, 0.6], radius: 1.25 },
+        "He" => ElementData { color: [0.0, 1.0, 1.0], radius: 0.31 },
+        "Ne" => ElementData { color: [0.0, 1.0, 1.0], radius: 0.38 },
+        "Ar" => ElementData { color: [0.0, 1.0, 1.0], radius: 0.71 },
+        _ => ElementData { color: [1.0, 0.0, 1.0], radius: 1.00 },
     }
 }
 
-/// Convert CIF structure to a molecule with bonds
-pub fn create_molecule(structure: &CifStructure) -> Molecule {
-    let mut atoms = Vec::new();
+pub fn create_molecule(structure: &Structure) -> Molecule {
+    let mut atoms = Vec::with_capacity(structure.atoms.len());
     let mut min_pos = [f32::INFINITY; 3];
     let mut max_pos = [f32::NEG_INFINITY; 3];
 
-    // Convert atoms and compute bounds
     for atom in &structure.atoms {
         let element_data = get_element_data(&atom.element);
-
         atoms.push(MoleculeAtom {
             element: atom.element.clone(),
             label: atom.label.clone(),
@@ -98,49 +84,94 @@ pub fn create_molecule(structure: &CifStructure) -> Molecule {
             color: element_data.color,
         });
 
-        // Update bounds
         for i in 0..3 {
             min_pos[i] = min_pos[i].min(atom.position[i]);
             max_pos[i] = max_pos[i].max(atom.position[i]);
         }
     }
 
-    // Detect bonds
-    let bonds = detect_bonds(&atoms);
+    let bounds = if atoms.is_empty() {
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    } else {
+        [
+            min_pos[0], min_pos[1], min_pos[2],
+            max_pos[0], max_pos[1], max_pos[2],
+        ]
+    };
 
-    // Set bounds
-    let bounds = [
-        min_pos[0], min_pos[1], min_pos[2],
-        max_pos[0], max_pos[1], max_pos[2],
-    ];
+    let bonds = build_bonds(&atoms, &structure.bonds);
 
-    Molecule {
-        atoms,
-        bonds,
-        bounds,
-    }
+    Molecule { atoms, bonds, bounds }
 }
 
-/// Detect bonds based on atomic distances
-///
-/// Uses element-specific distance thresholds (sum of covalent radii + tolerance)
+fn build_bonds(atoms: &[MoleculeAtom], explicit_bonds: &[StructureBond]) -> Vec<Bond> {
+    if atoms.is_empty() {
+        return Vec::new();
+    }
+
+    if explicit_bonds.is_empty() {
+        return detect_bonds(atoms);
+    }
+
+    let mut bonds = explicit_bonds_to_bonds(atoms, explicit_bonds);
+
+    // Some formats provide partial explicit bonds (e.g. ligand-only CONECT in PDB).
+    // If the explicit bond graph clearly covers only a small fraction of the structure,
+    // supplement it with distance-based detection for the remaining pairs.
+    if explicit_bonds.len() * 2 < atoms.len() {
+        let mut seen: HashSet<(usize, usize)> = bonds
+            .iter()
+            .map(|bond| canonical_pair(bond.atom_a, bond.atom_b))
+            .collect();
+
+        for detected in detect_bonds(atoms) {
+            let key = canonical_pair(detected.atom_a, detected.atom_b);
+            if seen.insert(key) {
+                bonds.push(detected);
+            }
+        }
+    }
+
+    bonds
+}
+
+fn explicit_bonds_to_bonds(atoms: &[MoleculeAtom], explicit_bonds: &[StructureBond]) -> Vec<Bond> {
+    let mut seen = HashSet::new();
+    let mut bonds = Vec::new();
+
+    for bond in explicit_bonds {
+        if bond.atom_a >= atoms.len() || bond.atom_b >= atoms.len() || bond.atom_a == bond.atom_b {
+            continue;
+        }
+
+        let key = canonical_pair(bond.atom_a, bond.atom_b);
+        if !seen.insert(key) {
+            continue;
+        }
+
+        let atom_a = &atoms[key.0];
+        let atom_b = &atoms[key.1];
+        bonds.push(Bond {
+            atom_a: key.0,
+            atom_b: key.1,
+            length: calculate_distance(atom_a.position, atom_b.position),
+        });
+    }
+
+    bonds
+}
+
 fn detect_bonds(atoms: &[MoleculeAtom]) -> Vec<Bond> {
     let mut bonds = Vec::new();
 
-    // For each pair of atoms
     for i in 0..atoms.len() {
         for j in (i + 1)..atoms.len() {
             let atom_a = &atoms[i];
             let atom_b = &atoms[j];
-
             let distance = calculate_distance(atom_a.position, atom_b.position);
+            let threshold = bond_threshold(atom_a, atom_b);
 
-            // Bond threshold: sum of radii * 1.2 (20% tolerance)
-            let threshold = (atom_a.radius + atom_b.radius) * 1.2;
-
-            // Don't create bonds that are too long (likely non-bonded)
-            // Max reasonable bond length: 3.5 Angstroms
-            if distance <= threshold && distance <= 3.5 {
+            if distance <= threshold {
                 bonds.push(Bond {
                     atom_a: i,
                     atom_b: j,
@@ -153,7 +184,12 @@ fn detect_bonds(atoms: &[MoleculeAtom]) -> Vec<Bond> {
     bonds
 }
 
-/// Calculate Euclidean distance between two points
+fn bond_threshold(atom_a: &MoleculeAtom, atom_b: &MoleculeAtom) -> f32 {
+    let covalent_sum = get_covalent_radius(&atom_a.element) + get_covalent_radius(&atom_b.element);
+    let tolerance = if atom_a.element == "H" || atom_b.element == "H" { 0.25 } else { 0.45 };
+    (covalent_sum + tolerance).min(3.2)
+}
+
 fn calculate_distance(a: [f32; 3], b: [f32; 3]) -> f32 {
     let dx = a[0] - b[0];
     let dy = a[1] - b[1];
@@ -161,9 +197,15 @@ fn calculate_distance(a: [f32; 3], b: [f32; 3]) -> f32 {
     (dx * dx + dy * dy + dz * dz).sqrt()
 }
 
-/// Get covalent radius for an element (for bond detection)
-/// These are approximate single-bond covalent radii in Angstroms
-fn _get_covalent_radius(symbol: &str) -> f32 {
+fn canonical_pair(atom_a: usize, atom_b: usize) -> (usize, usize) {
+    if atom_a < atom_b {
+        (atom_a, atom_b)
+    } else {
+        (atom_b, atom_a)
+    }
+}
+
+fn get_covalent_radius(symbol: &str) -> f32 {
     match symbol {
         "H" => 0.31,
         "C" => 0.76,
@@ -185,13 +227,14 @@ fn _get_covalent_radius(symbol: &str) -> f32 {
         "K" => 2.03,
         "Pb" => 1.46,
         "Co" => 1.26,
-        _ => 1.00,  // Default
+        _ => 1.00,
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::structure::{Structure, StructureAtom, StructureBond};
 
     #[test]
     fn test_get_element_data() {
@@ -203,20 +246,17 @@ mod tests {
         assert_eq!(oxygen.color, [1.0, 0.0, 0.0]);
 
         let unknown = get_element_data("Xx");
-        assert_eq!(unknown.color, [1.0, 0.0, 1.0]);  // Magenta for unknown
+        assert_eq!(unknown.color, [1.0, 0.0, 1.0]);
     }
 
     #[test]
     fn test_calculate_distance() {
-        let a = [0.0, 0.0, 0.0];
-        let b = [3.0, 4.0, 0.0];
-        let dist = calculate_distance(a, b);
+        let dist = calculate_distance([0.0, 0.0, 0.0], [3.0, 4.0, 0.0]);
         assert!((dist - 5.0).abs() < 0.001);
     }
 
     #[test]
     fn test_bond_detection() {
-        // Create two carbon atoms close enough to bond
         let atoms = vec![
             MoleculeAtom {
                 element: "C".to_string(),
@@ -228,7 +268,7 @@ mod tests {
             MoleculeAtom {
                 element: "C".to_string(),
                 label: "C2".to_string(),
-                position: [1.5, 0.0, 0.0],  // 1.5 Angstroms apart
+                position: [1.5, 0.0, 0.0],
                 radius: 0.70,
                 color: [0.5, 0.5, 0.5],
             },
@@ -243,7 +283,6 @@ mod tests {
 
     #[test]
     fn test_no_bond_when_too_far() {
-        // Create two atoms too far to bond
         let atoms = vec![
             MoleculeAtom {
                 element: "C".to_string(),
@@ -255,13 +294,42 @@ mod tests {
             MoleculeAtom {
                 element: "C".to_string(),
                 label: "C2".to_string(),
-                position: [10.0, 0.0, 0.0],  // 10 Angstroms apart
+                position: [10.0, 0.0, 0.0],
                 radius: 0.70,
                 color: [0.5, 0.5, 0.5],
             },
         ];
 
-        let bonds = detect_bonds(&atoms);
-        assert_eq!(bonds.len(), 0);
+        assert_eq!(detect_bonds(&atoms).len(), 0);
+    }
+
+    #[test]
+    fn test_create_molecule_uses_explicit_bonds() {
+        let structure = Structure {
+            atoms: vec![
+                StructureAtom {
+                    element: "C".to_string(),
+                    label: "C1".to_string(),
+                    position: [0.0, 0.0, 0.0],
+                },
+                StructureAtom {
+                    element: "O".to_string(),
+                    label: "O1".to_string(),
+                    position: [5.0, 0.0, 0.0],
+                },
+            ],
+            bonds: vec![StructureBond {
+                atom_a: 0,
+                atom_b: 1,
+                order: Some(1),
+            }],
+            cell: None,
+            space_group: None,
+            name: None,
+        };
+
+        let molecule = create_molecule(&structure);
+        assert_eq!(molecule.bonds.len(), 1);
+        assert!((molecule.bonds[0].length - 5.0).abs() < 0.001);
     }
 }

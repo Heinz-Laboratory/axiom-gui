@@ -14,10 +14,11 @@ export function CameraControlsPanel({
       <h3>Camera Controls</h3>
 
       <div className="control-hint">
-        <p>Use mouse to control camera:</p>
+        <p>Use the viewport directly:</p>
         <ul>
-          <li><strong>Drag</strong> - Rotate view</li>
-          <li><strong>Scroll</strong> - Zoom in/out</li>
+          <li><strong>Left drag</strong> - Rotate view</li>
+          <li><strong>Right or middle drag</strong> - Pan</li>
+          <li><strong>Scroll</strong> - Zoom in or out</li>
         </ul>
       </div>
 

@@ -13,6 +13,9 @@ pub mod cif_parser;
 pub mod molecule;
 pub mod export;
 pub mod config;
+pub mod pdb_parser;
+pub mod structure;
+pub mod xyz_parser;
 
 #[cfg(target_arch = "wasm32")]
 mod wasm;
@@ -21,6 +24,7 @@ pub use renderer::Renderer;
 pub use camera::{Camera, CameraState, CameraPreset};
 pub use geometry::molecule::MoleculeGeometry;
 pub use animation::{CameraAnimator, EasingFunction};
+pub use structure::{CellParameters, Structure, StructureAtom, StructureBond};
 
 #[cfg(target_arch = "wasm32")]
 pub use wasm::WasmRenderer;

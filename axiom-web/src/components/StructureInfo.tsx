@@ -15,110 +15,103 @@ interface StructureInfoProps {
   filename?: string
 }
 
+function formatRange(min: number, max: number) {
+  return `${min.toFixed(2)} to ${max.toFixed(2)}`
+}
+
 export function StructureInfo({ data, filename }: StructureInfoProps) {
   if (!data) {
     return (
-      <div style={{
-        padding: '20px',
-        background: '#2a2a2a',
-        borderRadius: '8px',
-        color: '#888',
-        fontSize: '13px',
-        fontFamily: 'monospace',
-        textAlign: 'center',
-      }}>
-        No structure loaded
-      </div>
+      <section className="axiom-card structure-panel structure-panel--empty" data-testid="structure-info">
+        <div className="section-heading">
+          <span className="section-heading__eyebrow">Scene Intel</span>
+          <h2>Structure summary</h2>
+        </div>
+        <p className="section-copy">
+          No structure loaded. Once a file is parsed, Axiom surfaces atom counts, bond counts, cell data, and scene bounds here.
+        </p>
+      </section>
     )
   }
 
+  const sortedElements = data.elementCounts
+    ? Object.entries(data.elementCounts).sort((a, b) => b[1] - a[1])
+    : data.elements.map((element) => [element, 0] as const)
+
   return (
-    <div style={{
-      padding: '20px',
-      background: '#2a2a2a',
-      borderRadius: '8px',
-      fontSize: '13px',
-      fontFamily: 'monospace',
-      color: '#ddd',
-    }}>
-      <div style={{ fontWeight: 'bold', marginBottom: '12px', color: '#4CAF50' }}>
-        Structure Information
+    <section className="axiom-card structure-panel" data-testid="structure-info">
+      <div className="section-heading">
+        <span className="section-heading__eyebrow">Scene Intel</span>
+        <h2>Structure summary</h2>
       </div>
 
       {filename && (
-        <div style={{ marginBottom: '10px', color: '#aaa', wordBreak: 'break-word' }}>
-          <span style={{ color: '#888' }}>File:</span> {filename}
+        <div className="structure-panel__filename">
+          <span className="structure-panel__label">File:</span> {filename}
         </div>
       )}
 
-      <div style={{ marginBottom: '8px' }}>
-        <span style={{ color: '#888' }}>Atoms:</span> {data.atomCount.toLocaleString()}
+      <div className="structure-panel__stats">
+        <div className="structure-panel__stat">
+          <span className="structure-panel__label">Atoms:</span>
+          <strong>{data.atomCount.toLocaleString()}</strong>
+        </div>
+        <div className="structure-panel__stat">
+          <span className="structure-panel__label">Bonds:</span>
+          <strong>{data.bondCount.toLocaleString()}</strong>
+        </div>
+        <div className="structure-panel__stat">
+          <span className="structure-panel__label">Elements:</span>
+          <strong>{sortedElements.length.toLocaleString()}</strong>
+        </div>
       </div>
 
-      <div style={{ marginBottom: '8px' }}>
-        <span style={{ color: '#888' }}>Bonds:</span> {data.bondCount.toLocaleString()}
-      </div>
-
-      {/* Element breakdown */}
-      {data.elementCounts ? (
-        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #444' }}>
-          <div style={{ color: '#888', marginBottom: '8px', fontWeight: 'bold' }}>Element Breakdown:</div>
-          <div style={{ fontSize: '12px', lineHeight: '1.6' }}>
-            {Object.entries(data.elementCounts)
-              .sort((a, b) => b[1] - a[1]) // Sort by count descending
-              .map(([element, count]) => (
-                <div key={element} style={{ marginBottom: '4px' }}>
-                  <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>{element}:</span>{' '}
-                  <span style={{ color: '#ddd' }}>{count.toLocaleString()}</span>
-                </div>
-              ))}
-          </div>
-        </div>
-      ) : (
-        <div style={{ marginBottom: '8px' }}>
-          <span style={{ color: '#888' }}>Elements:</span>{' '}
-          {data.elements.join(', ')}
-        </div>
-      )}
-
-      {/* Cell parameters */}
-      {data.cellParams && (
-        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #444' }}>
-          <div style={{ color: '#888', marginBottom: '8px', fontWeight: 'bold' }}>Unit Cell:</div>
-          <div style={{ fontSize: '11px', color: '#aaa', lineHeight: '1.6' }}>
-            <div>a = {data.cellParams.a.toFixed(3)} Å</div>
-            <div>b = {data.cellParams.b.toFixed(3)} Å</div>
-            <div>c = {data.cellParams.c.toFixed(3)} Å</div>
-            <div style={{ marginTop: '4px' }}>
-              α = {data.cellParams.alpha.toFixed(1)}°
+      <div className="structure-panel__section">
+        <div className="structure-panel__section-title">Element breakdown</div>
+        <div className="structure-panel__element-grid">
+          {sortedElements.map(([element, count]) => (
+            <div key={element} className="structure-panel__element-chip">
+              <span>{element}</span>
+              <strong>{count.toLocaleString()}</strong>
             </div>
-            <div>β = {data.cellParams.beta.toFixed(1)}°</div>
-            <div>γ = {data.cellParams.gamma.toFixed(1)}°</div>
+          ))}
+        </div>
+      </div>
+
+      {data.cellParams && (
+        <div className="structure-panel__section">
+          <div className="structure-panel__section-title">Unit cell</div>
+          <div className="structure-panel__kv">
+            <span>a = {data.cellParams.a.toFixed(3)} Å</span>
+            <span>b = {data.cellParams.b.toFixed(3)} Å</span>
+            <span>c = {data.cellParams.c.toFixed(3)} Å</span>
+            <span>α = {data.cellParams.alpha.toFixed(1)}°</span>
+            <span>β = {data.cellParams.beta.toFixed(1)}°</span>
+            <span>γ = {data.cellParams.gamma.toFixed(1)}°</span>
           </div>
         </div>
       )}
 
-      {/* Space group */}
-      {data.spaceGroup && (
-        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #444' }}>
-          <div style={{ color: '#888', marginBottom: '4px' }}>Space Group:</div>
-          <div style={{ fontSize: '12px', color: '#ddd', fontWeight: 'bold' }}>
-            {data.spaceGroup}
-          </div>
-        </div>
-      )}
+      {(data.spaceGroup || data.bounds) && (
+        <div className="structure-panel__section">
+          <div className="structure-panel__section-title">Scene envelope</div>
 
-      {/* Bounding box */}
-      {data.bounds && data.bounds.length === 6 && (
-        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #444' }}>
-          <div style={{ color: '#888', marginBottom: '6px' }}>Bounding Box (Å):</div>
-          <div style={{ fontSize: '11px', color: '#aaa', lineHeight: '1.5' }}>
-            X: {data.bounds[0].toFixed(2)} → {data.bounds[3].toFixed(2)}<br />
-            Y: {data.bounds[1].toFixed(2)} → {data.bounds[4].toFixed(2)}<br />
-            Z: {data.bounds[2].toFixed(2)} → {data.bounds[5].toFixed(2)}
-          </div>
+          {data.spaceGroup && (
+            <div className="structure-panel__stat">
+              <span className="structure-panel__label">Space Group:</span>
+              <strong>{data.spaceGroup}</strong>
+            </div>
+          )}
+
+          {data.bounds && data.bounds.length === 6 && (
+            <div className="structure-panel__bounds">
+              <span>X: {formatRange(data.bounds[0], data.bounds[3])}</span>
+              <span>Y: {formatRange(data.bounds[1], data.bounds[4])}</span>
+              <span>Z: {formatRange(data.bounds[2], data.bounds[5])}</span>
+            </div>
+          )}
         </div>
       )}
-    </div>
+    </section>
   )
 }

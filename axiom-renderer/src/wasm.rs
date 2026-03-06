@@ -5,7 +5,9 @@ use std::collections::{BTreeMap, HashMap};
 
 use crate::cif_parser::parse_cif;
 use crate::molecule::{create_molecule, Molecule};
-use crate::{AtomData, Camera, MoleculeGeometry, Renderer};
+use crate::pdb_parser::parse_pdb;
+use crate::xyz_parser::parse_xyz;
+use crate::{AtomData, Camera, MoleculeGeometry, Renderer, Structure};
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 use web_sys::HtmlCanvasElement;
@@ -21,7 +23,7 @@ struct CellParameters {
 }
 
 #[derive(Serialize)]
-struct CifMetadata {
+struct StructureMetadata {
     atom_count: usize,
     elements: BTreeMap<String, usize>,
     bond_count: usize,
@@ -109,48 +111,53 @@ impl WasmRenderer {
         }
     }
 
-    /// Load a CIF file from text
-    /// Returns a JSON string with structure metadata or error
+    #[wasm_bindgen]
+    pub fn pan(&mut self, delta_x: f32, delta_y: f32) {
+        if let Some(ref mut renderer) = self.inner {
+            renderer.pan_camera(delta_x, delta_y);
+        }
+    }
+
+    /// Load a structure file from text.
+    /// Supported formats: "cif", "pdb", "xyz"
+    #[wasm_bindgen]
+    pub fn load_structure(&mut self, format: &str, structure_text: &str) -> Result<String, JsValue> {
+        match format.trim().to_ascii_lowercase().as_str() {
+            "cif" | "mcif" => {
+                let structure = parse_cif(structure_text)
+                    .map_err(|e| JsValue::from_str(&format!("CIF parse error: {}", e)))?;
+                self.load_parsed_structure(structure)
+            }
+            "pdb" | "ent" => {
+                let structure = parse_pdb(structure_text)
+                    .map_err(|e| JsValue::from_str(&format!("PDB parse error: {}", e)))?;
+                self.load_parsed_structure(structure)
+            }
+            "xyz" => {
+                let structure = parse_xyz(structure_text)
+                    .map_err(|e| JsValue::from_str(&format!("XYZ parse error: {}", e)))?;
+                self.load_parsed_structure(structure)
+            }
+            other => Err(JsValue::from_str(&format!("Unsupported structure format: {}", other))),
+        }
+    }
+
+    /// Load a CIF file from text.
     #[wasm_bindgen]
     pub fn load_cif(&mut self, cif_text: &str) -> Result<String, JsValue> {
-        // Parse CIF
-        let structure = parse_cif(cif_text)
-            .map_err(|e| JsValue::from_str(&format!("CIF parse error: {}", e)))?;
+        self.load_structure("cif", cif_text)
+    }
 
-        // Convert to molecule
-        let molecule = create_molecule(&structure);
+    /// Load a PDB file from text.
+    #[wasm_bindgen]
+    pub fn load_pdb(&mut self, pdb_text: &str) -> Result<String, JsValue> {
+        self.load_structure("pdb", pdb_text)
+    }
 
-        let metadata = CifMetadata {
-            atom_count: molecule.atoms.len(),
-            elements: sorted_element_counts(&molecule),
-            bond_count: molecule.bonds.len(),
-            cell_params: Some(CellParameters {
-                a: structure.cell_lengths[0],
-                b: structure.cell_lengths[1],
-                c: structure.cell_lengths[2],
-                alpha: structure.cell_angles[0],
-                beta: structure.cell_angles[1],
-                gamma: structure.cell_angles[2],
-            }),
-            space_group: None,
-            bounds: Some(molecule.bounds),
-        };
-
-        let metadata = serde_json::to_string(&metadata)
-            .map_err(|e| JsValue::from_str(&format!("Failed to serialize CIF metadata: {}", e)))?;
-
-        // Convert molecule to GPU geometry
-        let geometry = MoleculeGeometry::from_molecule(&molecule);
-
-        // Load molecule and geometry into renderer
-        if let Some(ref mut renderer) = self.inner {
-            renderer.load_molecule(molecule.clone(), geometry);
-        }
-
-        // Store molecule
-        self.molecule = Some(molecule);
-
-        Ok(metadata)
+    /// Load an XYZ file from text.
+    #[wasm_bindgen]
+    pub fn load_xyz(&mut self, xyz_text: &str) -> Result<String, JsValue> {
+        self.load_structure("xyz", xyz_text)
     }
 
     /// Get the current structure information as JSON
@@ -266,29 +273,39 @@ impl WasmRenderer {
         }
     }
 
+    #[wasm_bindgen]
+    pub fn fit_to_scene(&mut self) -> Result<(), JsValue> {
+        if let Some(ref mut renderer) = self.inner {
+            renderer.fit_camera_to_scene();
+            Ok(())
+        } else {
+            Err(JsValue::from_str("Renderer not initialized"))
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn get_max_texture_dimension_2d(&self) -> Result<u32, JsValue> {
+        self.inner
+            .as_ref()
+            .map(|renderer| renderer.max_texture_dimension_2d())
+            .ok_or_else(|| JsValue::from_str("Renderer not initialized"))
+    }
+
     /// Export current view as PNG at specified resolution
     /// quality: "draft", "good", or "best"
     /// Returns PNG bytes as Uint8Array
     #[wasm_bindgen]
-    pub fn export_png(&self, width: u32, height: u32, quality: &str) -> Result<Vec<u8>, JsValue> {
-        // Note: PNG export requires the full renderer pipeline including PngExporter
-        // For Phase 3.1, we'll return a placeholder implementation
-        // Full implementation requires:
-        // 1. Access to device/queue from renderer
-        // 2. PngExporter instance
-        // 3. RenderPipeline for offscreen rendering
-        // 4. MoleculeGeometry from current state
-
-        if self.inner.is_none() {
-            return Err(JsValue::from_str("Renderer not initialized"));
-        }
+    pub async fn export_png(&self, width: u32, height: u32, quality: &str) -> Result<Vec<u8>, JsValue> {
+        let renderer = self
+            .inner
+            .as_ref()
+            .ok_or_else(|| JsValue::from_str("Renderer not initialized"))?;
 
         if self.molecule.is_none() {
             return Err(JsValue::from_str("No molecule loaded"));
         }
 
-        // Validate quality parameter
-        let _quality_level = match quality {
+        let quality_level = match quality {
             "draft" => crate::export::RenderQuality::Draft,
             "good" => crate::export::RenderQuality::Good,
             "best" => crate::export::RenderQuality::Best,
@@ -299,7 +316,6 @@ impl WasmRenderer {
             }
         };
 
-        // Validate resolution
         if width < 640 || width > 15360 {
             return Err(JsValue::from_str("Width must be between 640 and 15360"));
         }
@@ -307,10 +323,10 @@ impl WasmRenderer {
             return Err(JsValue::from_str("Height must be between 480 and 8640"));
         }
 
-        // TODO: Implement actual PNG export using PngExporter
-        // This requires refactoring Renderer to expose device/queue/pipeline
-        // For now, return an error indicating this is not yet implemented
-        Err(JsValue::from_str("PNG export not yet implemented. Requires renderer refactoring to expose GPU resources."))
+        renderer
+            .export_png(width, height, quality_level)
+            .await
+            .map_err(|e| JsValue::from_str(&e))
     }
 
     /// Export complete scene as JSON
@@ -401,6 +417,14 @@ impl WasmRenderer {
                 },
                 _ => return Err(JsValue::from_str(&format!("Invalid render mode: {}. Use 'ball-and-stick', 'spacefill', 'stick', or 'wireframe'", mode))),
             };
+
+            if let Some(ref molecule) = self.molecule {
+                let geometry = MoleculeGeometry::from_molecule_with_render_mode(
+                    molecule,
+                    &renderer.config.render_mode,
+                );
+                renderer.replace_geometry(geometry);
+            }
 
             Ok(())
         } else {
@@ -797,6 +821,41 @@ impl WasmRenderer {
         );
 
         Ok(())
+    }
+}
+
+impl WasmRenderer {
+    fn load_parsed_structure(&mut self, structure: Structure) -> Result<String, JsValue> {
+        let molecule = create_molecule(&structure);
+        let metadata = StructureMetadata {
+            atom_count: molecule.atoms.len(),
+            elements: sorted_element_counts(&molecule),
+            bond_count: molecule.bonds.len(),
+            cell_params: structure.cell.map(|cell| CellParameters {
+                a: cell.lengths[0],
+                b: cell.lengths[1],
+                c: cell.lengths[2],
+                alpha: cell.angles[0],
+                beta: cell.angles[1],
+                gamma: cell.angles[2],
+            }),
+            space_group: structure.space_group,
+            bounds: Some(molecule.bounds),
+        };
+
+        let metadata = serde_json::to_string(&metadata)
+            .map_err(|e| JsValue::from_str(&format!("Failed to serialize structure metadata: {}", e)))?;
+
+        if let Some(ref mut renderer) = self.inner {
+            let geometry = MoleculeGeometry::from_molecule_with_render_mode(
+                &molecule,
+                &renderer.config.render_mode,
+            );
+            renderer.load_molecule(molecule.clone(), geometry);
+        }
+        self.molecule = Some(molecule);
+
+        Ok(metadata)
     }
 }
 

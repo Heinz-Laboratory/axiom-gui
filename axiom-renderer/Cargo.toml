@@ -26,6 +26,7 @@ wgpu = { version = "0.19", features = ["wgsl"] }  # WebGPU backend for native
 wgpu = { version = "0.19", features = ["webgl", "wgsl"] }  # WebGL backend ONLY for wasm32
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
+gloo-timers = { version = "0.3", features = ["futures"] }
 web-sys = { version = "0.3", features = [
     "Window",
     "Document",

@@ -4,7 +4,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type { RenderSettings, RenderMode, QualitySettings, LightingSettings } from '../types/render-settings';
-import { DEFAULT_RENDER_SETTINGS, hexToRgba } from '../types/render-settings';
+import { DEFAULT_RENDER_SETTINGS, hexToRgba, normalizeRenderSettings } from '../types/render-settings';
 
 interface RenderSettingsContextType {
   settings: RenderSettings;
@@ -27,7 +27,7 @@ export function RenderSettingsProvider({ children }: { children: ReactNode }) {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        return normalizeRenderSettings(JSON.parse(stored));
       }
     } catch (e) {
       console.warn('Failed to load render settings from localStorage:', e);

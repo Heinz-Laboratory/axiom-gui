@@ -54,7 +54,11 @@ export function useKeyboardShortcuts(
 
       // Find matching shortcut
       for (const shortcut of shortcuts) {
-        const keyMatch = e.key.toLowerCase() === shortcut.key.toLowerCase();
+        const normalizedKey = e.key.toLowerCase();
+        const shortcutKey = shortcut.key.toLowerCase();
+        const keyMatch =
+          normalizedKey === shortcutKey ||
+          (shortcutKey === '?' && (normalizedKey === '?' || (normalizedKey === '/' && e.shiftKey)));
 
         // For Ctrl shortcuts, match either Ctrl (Windows/Linux) or Meta/Cmd (macOS)
         const ctrlMatch = shortcut.ctrl

@@ -1,0 +1,1072 @@
+:root {
+  --axiom-bg: #071018;
+  --axiom-bg-deep: #03080d;
+  --axiom-panel: rgba(8, 18, 26, 0.78);
+  --axiom-panel-strong: rgba(13, 28, 39, 0.92);
+  --axiom-panel-soft: rgba(17, 34, 46, 0.68);
+  --axiom-border: rgba(158, 197, 216, 0.16);
+  --axiom-border-strong: rgba(166, 217, 202, 0.34);
+  --axiom-text: #edf5f2;
+  --axiom-text-soft: #b5c2cb;
+  --axiom-text-muted: #78919f;
+  --axiom-accent: #a5dbc5;
+  --axiom-accent-strong: #d7b37a;
+  --axiom-danger: #ff8772;
+  --axiom-warning: #f4cb88;
+  --axiom-shadow: 0 30px 90px rgba(0, 0, 0, 0.38);
+  --axiom-font-sans: 'IBM Plex Sans', 'Avenir Next', 'Segoe UI', sans-serif;
+  --axiom-font-mono: 'IBM Plex Mono', 'SFMono-Regular', 'Consolas', monospace;
+}
+
+.axiom-shell {
+  position: relative;
+  min-height: 100vh;
+  height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(165, 219, 197, 0.16), transparent 25%),
+    radial-gradient(circle at bottom right, rgba(215, 179, 122, 0.15), transparent 24%),
+    linear-gradient(135deg, #071018 0%, #09141d 42%, #04090d 100%);
+  color: var(--axiom-text);
+  overflow: hidden;
+}
+
+.axiom-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.7), transparent 90%);
+  pointer-events: none;
+}
+
+.axiom-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr) minmax(320px, 380px);
+  gap: 1.25rem;
+  height: calc(100vh - 2.5rem);
+  max-height: calc(100vh - 2.5rem);
+  padding: 1.25rem;
+  box-sizing: border-box;
+}
+
+.axiom-sidebar,
+.axiom-stage {
+  min-height: 0;
+}
+
+.axiom-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+  padding-right: 0.125rem;
+}
+
+.axiom-sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.axiom-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+}
+
+.axiom-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.axiom-card,
+.render-settings-panel,
+.camera-controls-panel,
+.camera-presets-panel,
+.measurement-panel,
+.export-panel {
+  position: relative;
+  background: var(--axiom-panel);
+  border: 1px solid var(--axiom-border);
+  border-radius: 22px;
+  box-shadow: var(--axiom-shadow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.axiom-card {
+  padding: 1.1rem;
+}
+
+.section-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.75rem;
+}
+
+.section-heading--hero {
+  gap: 0.35rem;
+}
+
+.section-heading__eyebrow {
+  font-family: var(--axiom-font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--axiom-accent);
+}
+
+.section-heading h1,
+.section-heading h2,
+.render-settings-panel h2,
+.camera-controls-panel h3,
+.camera-presets-panel h3,
+.measurement-panel h3,
+.export-panel h3 {
+  margin: 0;
+  font-family: var(--axiom-font-sans);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--axiom-text);
+}
+
+.section-heading h1 {
+  font-size: clamp(1.9rem, 2vw, 2.55rem);
+}
+
+.section-heading h2,
+.render-settings-panel h2 {
+  font-size: 1.05rem;
+}
+
+.section-copy,
+.app-identity__lede {
+  margin: 0;
+  color: var(--axiom-text-soft);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.section-footnote {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--axiom-text-muted);
+  font-family: var(--axiom-font-mono);
+}
+
+.app-identity {
+  padding: 1.4rem;
+  background:
+    linear-gradient(180deg, rgba(16, 34, 47, 0.95), rgba(8, 19, 29, 0.92));
+}
+
+.app-identity__status-row,
+.app-identity__actions,
+.stage-brief__modes,
+.agent-console__suggestions,
+.structure-panel__element-grid,
+.structure-panel__bounds,
+.structure-panel__kv,
+.scene-buttons,
+.export-tabs,
+.color-presets,
+.preset-grid,
+.action-buttons,
+.scene-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.status-pill,
+.mode-chip,
+.sample-library__format,
+.agent-console__status,
+.stage-metrics__chip,
+.structure-panel__element-chip,
+.color-swatch,
+.color-picker,
+.export-tabs button,
+.preset-btn,
+.control-btn,
+.export-button,
+.save-preset-btn,
+.save-preset-form button,
+.agent-console__suggestions button {
+  font-family: var(--axiom-font-mono);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--axiom-text-soft);
+  font-size: 0.78rem;
+}
+
+.status-pill--accent,
+.agent-console__status.is-ready,
+.secondary-action.is-active,
+.mode-chip.is-active,
+.render-settings-panel .color-swatch.active,
+.render-settings-panel .reset-all-button:hover,
+.camera-presets-panel .preset-btn.active {
+  border-color: rgba(165, 219, 197, 0.4);
+  background: rgba(165, 219, 197, 0.14);
+  color: var(--axiom-text);
+}
+
+.app-identity__actions {
+  margin-top: 1rem;
+}
+
+.primary-action,
+.secondary-action,
+.mode-chip,
+.sample-library__toggle,
+.file-ingest__dropzone,
+.agent-console__composer button,
+.export-button,
+.export-tabs button,
+.reset-button,
+.reset-all-button,
+.control-btn,
+.save-preset-btn,
+.save-preset-form button,
+.measurement-panel .clear-all-btn,
+.measurement-panel .create-measurement-btn,
+.agent-console__suggestions button,
+.camera-presets-panel .delete-btn {
+  border-radius: 14px;
+  border: 1px solid transparent;
+  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, color 180ms ease;
+}
+
+.primary-action,
+.export-button.primary,
+.measurement-panel .create-measurement-btn,
+.agent-console__composer button {
+  background: linear-gradient(135deg, rgba(165, 219, 197, 0.26), rgba(215, 179, 122, 0.18));
+  border-color: rgba(165, 219, 197, 0.24);
+  color: var(--axiom-text);
+}
+
+.secondary-action,
+.mode-chip,
+.sample-library__toggle,
+.export-tabs button,
+.export-button.secondary,
+.control-btn,
+.reset-button,
+.reset-all-button,
+.save-preset-btn,
+.save-preset-form button:last-child,
+.agent-console__suggestions button,
+.camera-presets-panel .preset-btn,
+.camera-presets-panel .delete-btn,
+.measurement-panel .clear-all-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--axiom-text-soft);
+}
+
+.primary-action:hover,
+.secondary-action:hover,
+.mode-chip:hover,
+.sample-library__toggle:hover,
+.file-ingest__dropzone:hover,
+.agent-console__composer button:hover,
+.export-button:hover,
+.export-tabs button:hover,
+.reset-button:hover,
+.reset-all-button:hover,
+.control-btn:hover,
+.save-preset-btn:hover,
+.save-preset-form button:hover,
+.measurement-panel .clear-all-btn:hover,
+.measurement-panel .create-measurement-btn:hover,
+.agent-console__suggestions button:hover,
+.camera-presets-panel .preset-btn:hover,
+.camera-presets-panel .delete-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(165, 219, 197, 0.35);
+  color: var(--axiom-text);
+}
+
+.primary-action:disabled,
+.secondary-action:disabled,
+.mode-chip:disabled,
+.sample-library__toggle:disabled,
+.file-ingest__dropzone:disabled,
+.agent-console__composer button:disabled,
+.export-button:disabled,
+.reset-button:disabled,
+.reset-all-button:disabled,
+.control-btn:disabled,
+.measurement-panel .create-measurement-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+.primary-action,
+.secondary-action {
+  padding: 0.8rem 1rem;
+}
+
+.sample-library__toggle,
+.file-ingest__dropzone,
+.mode-chip,
+.export-tabs button,
+.control-btn,
+.save-preset-btn,
+.save-preset-form button,
+.agent-console__suggestions button {
+  min-height: 0;
+}
+
+.sample-library__grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+.sample-library__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  padding: 0.95rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+}
+
+.sample-library__item:hover {
+  border-color: rgba(165, 219, 197, 0.32);
+  background: rgba(165, 219, 197, 0.06);
+}
+
+.sample-library__item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 1rem;
+}
+
+.sample-library__name {
+  font-weight: 600;
+  color: var(--axiom-text);
+}
+
+.sample-library__format {
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(165, 219, 197, 0.08);
+  border: 1px solid rgba(165, 219, 197, 0.2);
+  color: var(--axiom-accent);
+  font-size: 0.72rem;
+}
+
+.sample-library__description,
+.file-ingest__caption,
+.structure-panel__label,
+.structure-panel__section-title,
+.agent-console__context,
+.stage-hud span,
+.measurement-panel .help-text,
+.export-panel .format-info p,
+.export-panel .scene-description,
+.render-settings-panel .settings-section h3,
+.render-settings-panel .sliders label span,
+.render-settings-panel .radio-group label,
+.render-settings-panel .form-group label,
+.camera-controls-panel .control-hint p,
+.camera-controls-panel .control-hint li,
+.camera-presets-panel .custom-presets h4,
+.measurement-panel .empty-state,
+.measurement-panel .selected-atoms-info p,
+.export-panel .form-group label,
+.export-panel .format-info,
+.export-panel .scene-description {
+  color: var(--axiom-text-soft);
+}
+
+.file-ingest__dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  width: 100%;
+  text-align: left;
+  padding: 1.1rem 1.05rem;
+  border-style: dashed;
+  border-color: rgba(165, 219, 197, 0.22);
+  background: linear-gradient(180deg, rgba(13, 27, 36, 0.9), rgba(8, 18, 26, 0.8));
+}
+
+.file-ingest__dropzone.is-dragging {
+  border-color: rgba(165, 219, 197, 0.5);
+  background: rgba(165, 219, 197, 0.08);
+}
+
+.file-ingest__label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--axiom-text);
+}
+
+.file-ingest__formats,
+.agent-console__context,
+.structure-panel__filename,
+.structure-panel__bounds,
+.structure-panel__kv,
+.stage-hud,
+.stage-metrics__chip,
+.measurement-panel .measurement-value,
+.measurement-panel .atom-indices,
+.export-panel .format-info p {
+  font-family: var(--axiom-font-mono);
+}
+
+.status-banner {
+  padding: 0.85rem 0.95rem;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  font-family: var(--axiom-font-mono);
+  font-size: 0.84rem;
+}
+
+.status-banner--error,
+.measurement-panel .error-message,
+.export-panel .export-error {
+  background: rgba(255, 135, 114, 0.11);
+  border-color: rgba(255, 135, 114, 0.28);
+  color: var(--axiom-danger);
+}
+
+.status-banner--warning {
+  background: rgba(244, 203, 136, 0.12);
+  border-color: rgba(244, 203, 136, 0.24);
+  color: var(--axiom-warning);
+}
+
+.structure-panel__filename,
+.structure-panel__stats,
+.structure-panel__section {
+  margin-top: 0.9rem;
+}
+
+.structure-panel__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.structure-panel__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.structure-panel__stat strong,
+.structure-panel__filename,
+.agent-console__entry--agent,
+.stage-hud strong,
+.measurement-panel .measurement-label,
+.measurement-panel .selected-atoms-info strong,
+.export-panel .format-info,
+.export-panel .scene-description,
+.export-panel .export-button,
+.camera-controls-panel .control-hint strong,
+.camera-presets-panel .preset-name {
+  color: var(--axiom-text);
+}
+
+.structure-panel__element-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 92px;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.structure-panel__bounds,
+.structure-panel__kv {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.stage-brief {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.stage-brief__modes {
+  justify-content: flex-end;
+  max-width: 360px;
+}
+
+.mode-chip {
+  padding: 0.65rem 0.85rem;
+  font-size: 0.8rem;
+}
+
+.stage-canvas-shell {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border-radius: 30px;
+  overflow: hidden;
+  border: 1px solid var(--axiom-border-strong);
+  background:
+    radial-gradient(circle at top, rgba(165, 219, 197, 0.12), transparent 30%),
+    linear-gradient(180deg, #071018 0%, #03070b 100%);
+  box-shadow: var(--axiom-shadow);
+}
+
+.stage-canvas-shell__backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.06), transparent 46%),
+    linear-gradient(180deg, rgba(165, 219, 197, 0.05), transparent 35%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: auto, auto, 28px 28px, 28px 28px;
+  pointer-events: none;
+}
+
+.stage-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+  touch-action: none;
+}
+
+.stage-canvas.is-dragging {
+  cursor: grabbing;
+}
+
+.stage-hud {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: min(320px, calc(100% - 2rem));
+  padding: 0.8rem 0.9rem;
+  border-radius: 18px;
+  background: rgba(4, 9, 13, 0.64);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  pointer-events: none;
+}
+
+.stage-hud__eyebrow {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--axiom-accent);
+}
+
+.stage-hud--top-left {
+  top: 1rem;
+  left: 1rem;
+}
+
+.stage-hud--top-right {
+  top: 1rem;
+  right: 1rem;
+}
+
+.stage-hud--bottom-left {
+  left: 1rem;
+  bottom: 1rem;
+}
+
+.stage-hud--bottom-right {
+  right: 1rem;
+  bottom: 1rem;
+}
+
+.stage-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.stage-metrics__chip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stage-metrics__chip small {
+  color: var(--axiom-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: rgba(2, 6, 9, 0.68);
+  color: var(--axiom-text);
+  font-family: var(--axiom-font-mono);
+}
+
+.loading-overlay--structure {
+  background: rgba(2, 6, 9, 0.42);
+}
+
+.loading-overlay__spinner {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 3px solid rgba(165, 219, 197, 0.2);
+  border-top-color: var(--axiom-accent);
+  animation: axiom-spin 800ms linear infinite;
+}
+
+@keyframes axiom-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.agent-console {
+  background: linear-gradient(180deg, rgba(7, 17, 24, 0.94), rgba(5, 10, 15, 0.96));
+}
+
+.agent-console__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.agent-console__status {
+  align-self: flex-start;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--axiom-text-muted);
+  white-space: nowrap;
+}
+
+.agent-console__context {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.9rem 0;
+  padding: 0.8rem 0.9rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.76rem;
+}
+
+.agent-console__log {
+  display: grid;
+  gap: 0.7rem;
+  max-height: 260px;
+  overflow-y: auto;
+  margin-bottom: 0.85rem;
+  padding: 0.9rem;
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.agent-console__entry {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  gap: 0.5rem;
+  font-family: var(--axiom-font-mono);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.agent-console__entry--system {
+  color: var(--axiom-text-muted);
+}
+
+.agent-console__entry--user {
+  color: #dce9ff;
+}
+
+.agent-console__entry--agent {
+  color: var(--axiom-accent);
+}
+
+.agent-console__prompt {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.agent-console__composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.agent-console__composer input,
+.save-preset-form input,
+.export-panel select,
+.export-panel input,
+.render-settings-panel select,
+.render-settings-panel input[type='color'],
+.render-settings-panel input[type='range'],
+.measurement-panel .measurement-list,
+.measurement-panel .selected-atoms-info,
+.measurement-panel .measurement-mode-toggle,
+.camera-presets-panel input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--axiom-text);
+}
+
+.agent-console__composer input,
+.save-preset-form input,
+.export-panel select,
+.export-panel input,
+.render-settings-panel select,
+.camera-presets-panel input {
+  border-radius: 14px;
+  padding: 0.8rem 0.9rem;
+  font-family: var(--axiom-font-mono);
+}
+
+.agent-console__suggestions button {
+  padding: 0.55rem 0.75rem;
+  font-size: 0.74rem;
+}
+
+.render-settings-panel,
+.camera-controls-panel,
+.camera-presets-panel,
+.measurement-panel,
+.export-panel {
+  padding: 1.1rem;
+  margin: 0;
+}
+
+.render-settings-panel h2,
+.camera-controls-panel h3,
+.camera-presets-panel h3,
+.measurement-panel h3,
+.export-panel h3 {
+  padding-bottom: 0;
+  border-bottom: 0;
+  margin-bottom: 0.9rem;
+}
+
+.render-settings-panel .settings-section,
+.measurement-panel .new-measurement-section,
+.camera-presets-panel .custom-presets,
+.camera-presets-panel .save-preset-section,
+.export-panel .export-options {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.9rem;
+}
+
+.render-settings-panel .settings-section:first-of-type,
+.export-panel .export-options:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.render-settings-panel .radio-group,
+.measurement-panel .measurement-type-selector,
+.export-panel .export-options,
+.render-settings-panel .sliders,
+.measurement-panel .measurement-list,
+.measurement-panel .measurement-mode-toggle,
+.camera-presets-panel .save-preset-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.render-settings-panel .radio-group label,
+.measurement-panel .measurement-type-selector label,
+.measurement-panel .measurement-mode-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.75rem 0.8rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.render-settings-panel .color-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.render-settings-panel .color-swatch,
+.render-settings-panel .color-picker {
+  width: 100%;
+  height: 44px;
+  min-width: 0;
+  border-radius: 14px;
+}
+
+.render-settings-panel .sliders label,
+.export-panel .form-group {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.render-settings-panel .sliders input[type='range'] {
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0;
+}
+
+.render-settings-panel .sliders input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--axiom-accent);
+  border: 2px solid rgba(3, 8, 13, 0.8);
+}
+
+.camera-controls-panel .control-hint,
+.export-panel .format-info,
+.measurement-panel .measurement-mode-toggle,
+.measurement-panel .selected-atoms-info,
+.measurement-panel .measurement-list {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 0.9rem;
+}
+
+.camera-controls-panel .control-hint ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.camera-presets-panel .preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.camera-presets-panel .preset-btn {
+  justify-content: center;
+  padding: 0.85rem 0.7rem;
+  border-radius: 16px;
+}
+
+.camera-presets-panel .custom-preset-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+}
+
+.measurement-panel .panel-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.measurement-panel .measurement-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  padding: 0.75rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.measurement-panel .measurement-value {
+  color: var(--axiom-accent);
+}
+
+.measurement-panel .delete-btn,
+.camera-presets-panel .delete-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+}
+
+.export-panel .export-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  border: 0;
+  margin-bottom: 1rem;
+}
+
+.export-panel .export-tabs button.active {
+  color: var(--axiom-text);
+  border-color: rgba(165, 219, 197, 0.35);
+  background: rgba(165, 219, 197, 0.12);
+}
+
+.export-panel .custom-resolution {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.export-panel .scene-buttons {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.axiom-error-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: linear-gradient(180deg, #071018, #03070b);
+  color: var(--axiom-text);
+}
+
+.axiom-error-screen__card {
+  max-width: 520px;
+  padding: 1.6rem;
+  border-radius: 24px;
+  background: rgba(8, 18, 26, 0.88);
+  border: 1px solid rgba(255, 135, 114, 0.24);
+  box-shadow: var(--axiom-shadow);
+}
+
+.axiom-error-screen__eyebrow {
+  margin: 0 0 0.4rem;
+  font-family: var(--axiom-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--axiom-danger);
+}
+
+@media (max-width: 1320px) {
+  .axiom-layout {
+    grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
+  }
+
+  .axiom-sidebar--right {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+  }
+}
+
+@media (max-width: 980px) {
+  .axiom-shell {
+    height: auto;
+  }
+
+  .axiom-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+    max-height: none;
+  }
+
+  .axiom-sidebar,
+  .axiom-stage {
+    overflow: visible;
+  }
+
+  .axiom-sidebar--right {
+    grid-template-columns: 1fr;
+  }
+
+  .stage-brief {
+    flex-direction: column;
+  }
+
+  .stage-brief__modes {
+    justify-content: flex-start;
+  }
+
+  .stage-canvas-shell {
+    min-height: 68vh;
+  }
+}
+
+@media (max-width: 720px) {
+  .axiom-layout {
+    padding: 0.85rem;
+    gap: 0.85rem;
+  }
+
+  .axiom-card,
+  .render-settings-panel,
+  .camera-controls-panel,
+  .camera-presets-panel,
+  .measurement-panel,
+  .export-panel {
+    border-radius: 18px;
+    padding: 0.95rem;
+  }
+
+  .structure-panel__stats,
+  .export-panel .custom-resolution,
+  .camera-presets-panel .preset-grid,
+  .export-panel .export-tabs,
+  .stage-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .stage-hud {
+    position: static;
+    max-width: none;
+    margin: 0.65rem;
+  }
+
+  .stage-canvas-shell {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 72vh;
+  }
+
+  .stage-canvas {
+    position: absolute;
+    inset: 0;
+  }
+}

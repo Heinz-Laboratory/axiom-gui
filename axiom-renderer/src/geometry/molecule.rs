@@ -3,6 +3,7 @@
 //! Converts parsed molecular structures into GPU-ready instance buffers
 //! for efficient rendering of atoms (spheres) and bonds (cylinders).
 
+use crate::config::RenderMode;
 use crate::molecule::Molecule;
 use bytemuck::{Pod, Zeroable};
 use wgpu::util::DeviceExt;
@@ -76,22 +77,25 @@ pub struct MoleculeGeometry {
 }
 
 impl MoleculeGeometry {
-    /// Convert a parsed Molecule into GPU-ready geometry
+    /// Convert a parsed Molecule into GPU-ready geometry using the default render mode.
     pub fn from_molecule(molecule: &Molecule) -> Self {
+        Self::from_molecule_with_render_mode(molecule, &RenderMode::default())
+    }
+
+    /// Convert a parsed Molecule into GPU-ready geometry for a specific render mode.
+    pub fn from_molecule_with_render_mode(molecule: &Molecule, render_mode: &RenderMode) -> Self {
         let mut atom_instances = Vec::with_capacity(molecule.atoms.len());
 
-        // Convert atoms to instances
         for atom in &molecule.atoms {
             atom_instances.push(AtomInstance {
                 position: atom.position,
-                radius: atom.radius,
+                radius: Self::atom_radius_for_mode(atom.radius, render_mode),
                 color: atom.color,
                 _padding: 0.0,
             });
         }
 
-        // Convert bonds to instances
-        let bond_instances = Self::create_bond_instances(molecule);
+        let bond_instances = Self::create_bond_instances(molecule, render_mode);
 
         MoleculeGeometry {
             atom_instances,
@@ -100,29 +104,29 @@ impl MoleculeGeometry {
         }
     }
 
-    /// Create bond instances from molecule bonds
-    fn create_bond_instances(molecule: &Molecule) -> Vec<BondInstance> {
+    /// Create bond instances from molecule bonds.
+    fn create_bond_instances(molecule: &Molecule, render_mode: &RenderMode) -> Vec<BondInstance> {
+        if !render_mode.show_bonds() {
+            return Vec::new();
+        }
+
         let mut instances = Vec::with_capacity(molecule.bonds.len());
+        let bond_radius = render_mode.bond_radius().max(0.03);
 
         for bond in &molecule.bonds {
-            // Get atom positions
             let atom_a = &molecule.atoms[bond.atom_a];
             let atom_b = &molecule.atoms[bond.atom_b];
 
-            // Average the atom colors for bond color
             let color_r = (atom_a.color[0] + atom_b.color[0]) / 2.0;
             let color_g = (atom_a.color[1] + atom_b.color[1]) / 2.0;
             let color_b = (atom_a.color[2] + atom_b.color[2]) / 2.0;
-
-            // Bond radius is typically 0.15 Ångströms for ball-and-stick
-            const BOND_RADIUS: f32 = 0.15;
 
             instances.push(BondInstance {
                 start_radius: [
                     atom_a.position[0],
                     atom_a.position[1],
                     atom_a.position[2],
-                    BOND_RADIUS,
+                    bond_radius,
                 ],
                 end_length: [
                     atom_b.position[0],
@@ -137,7 +141,16 @@ impl MoleculeGeometry {
         instances
     }
 
-    /// Get the center point of the molecule bounding box
+    fn atom_radius_for_mode(base_radius: f32, render_mode: &RenderMode) -> f32 {
+    match render_mode {
+        RenderMode::BallAndStick { atom_scale, .. } => base_radius * atom_scale,
+        RenderMode::Spacefill { vdw_scale } => base_radius * vdw_scale,
+        RenderMode::Stick { atom_radius, .. } => *atom_radius,
+        RenderMode::Wireframe { .. } => 0.08,
+    }
+}
+
+/// Get the center point of the molecule bounding box
     pub fn center(&self) -> [f32; 3] {
         [
             (self.bounds[0] + self.bounds[3]) / 2.0,

@@ -1,225 +1,28 @@
-/* axiom-web/src/components/RenderSettingsPanel.css */
-/* Professional 2026 UI styling for rendering settings panel */
-
 .render-settings-panel {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 1rem;
-  padding: 1rem;
-  background: #1e1e1e;
-  border-radius: 8px;
-  color: #e0e0e0;
+  color: var(--axiom-text);
 }
 
-.render-settings-panel h2 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #ffffff;
-  border-bottom: 2px solid #3a3a3a;
-  padding-bottom: 0.5rem;
-}
-
-.settings-section {
-  display: flex;
-  flex-direction: column;
+.render-settings-panel .settings-section {
+  display: grid;
   gap: 0.75rem;
 }
 
-.settings-section h3 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #b0b0b0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  user-select: none;
-}
-
-.settings-section h3:hover {
-  color: #ffffff;
-}
-
-/* Radio button groups */
-.radio-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.radio-group label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.radio-group label:hover {
-  background-color: #2a2a2a;
-}
-
-.radio-group input[type="radio"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: #4a9eff;
-}
-
-/* Slider controls */
-.sliders {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.sliders label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.sliders label span {
-  font-size: 0.875rem;
-  color: #b0b0b0;
-}
-
-.sliders input[type="range"] {
-  width: 100%;
-  height: 4px;
-  background: #3a3a3a;
-  border-radius: 2px;
-  outline: none;
-  -webkit-appearance: none;
-}
-
-.sliders input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  background: #4a9eff;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.sliders input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-}
-
-.sliders input[type="range"]::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  background: #4a9eff;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.sliders input[type="range"]::-moz-range-thumb:hover {
-  transform: scale(1.2);
-}
-
-/* Color presets */
-.color-presets {
+.render-settings-panel .radio-group,
+.render-settings-panel .sliders {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 0.5rem;
-  align-items: center;
+  gap: 0.75rem;
 }
 
-.color-swatch {
-  width: 36px;
-  height: 36px;
-  border: 2px solid #3a3a3a;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-  padding: 0;
+.render-settings-panel input[type='radio'],
+.render-settings-panel input[type='range'],
+.render-settings-panel input[type='color'],
+.render-settings-panel select {
+  accent-color: var(--axiom-accent);
 }
 
-.color-swatch:hover {
-  border-color: #4a9eff;
-  transform: scale(1.1);
-}
-
-.color-swatch.active {
-  border-color: #4a9eff;
-  border-width: 3px;
-  box-shadow: 0 0 8px rgba(74, 158, 255, 0.5);
-}
-
-.color-picker {
-  width: 36px;
-  height: 36px;
-  border: 2px solid #3a3a3a;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: border-color 0.2s;
-  padding: 0;
-}
-
-.color-picker:hover {
-  border-color: #4a9eff;
-}
-
-/* Buttons */
-.reset-button,
-.reset-all-button {
-  padding: 0.5rem 1rem;
-  background: #3a3a3a;
-  color: #e0e0e0;
-  border: 1px solid #4a4a4a;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.reset-button:hover,
-.reset-all-button:hover {
-  background: #4a4a4a;
-  border-color: #4a9eff;
-}
-
-.reset-all-button {
-  margin-top: 0.5rem;
+.render-settings-panel .reset-button,
+.render-settings-panel .reset-all-button {
   width: 100%;
-  background: #2a2a2a;
-  border: 2px solid #4a4a4a;
-  font-weight: 600;
-}
-
-.reset-all-button:hover {
-  background: #3a3a3a;
-  border-color: #ff6b6b;
-}
-
-/* Focus indicators for accessibility */
-input[type="radio"]:focus-visible,
-input[type="range"]:focus-visible,
-input[type="color"]:focus-visible,
-.color-swatch:focus-visible,
-button:focus-visible {
-  outline: 2px solid #4a9eff;
-  outline-offset: 2px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .color-presets {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .color-swatch,
-  .color-picker {
-    width: 32px;
-    height: 32px;
-  }
 }

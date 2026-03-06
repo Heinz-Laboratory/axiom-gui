@@ -1,85 +1,144 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { WasmRenderer } from '../wasm/axiom-renderer';
 import '../styles/ExportPanel.css';
 
 interface ExportPanelProps {
   renderer: WasmRenderer | null;
   structureName: string;
+  onBusyChange?: (busy: boolean) => void;
 }
 
 type ExportType = 'png' | 'structure' | 'scene';
 type Resolution = '1080p' | '4k' | '8k' | 'custom';
 type StructureFormat = 'pdb' | 'xyz' | 'cif';
+type RenderQuality = 'draft' | 'good' | 'best';
 
 const RESOLUTIONS = {
   '1080p': { width: 1920, height: 1080, label: '1080p (1920×1080)' },
   '4k': { width: 3840, height: 2160, label: '4K (3840×2160)' },
   '8k': { width: 7680, height: 4320, label: '8K (7680×4320)' },
   'custom': { width: 1920, height: 1080, label: 'Custom' },
+} as const;
+
+const QUALITY_LABELS: Record<RenderQuality, string> = {
+  draft: 'Draft (1x SSAA)',
+  good: 'Good (2x SSAA)',
+  best: 'Best (4x SSAA)',
 };
 
-export function ExportPanel({ renderer, structureName }: ExportPanelProps) {
+const QUALITY_ORDER: RenderQuality[] = ['best', 'good', 'draft'];
+
+function getSsaaMultiplier(quality: RenderQuality) {
+  switch (quality) {
+    case 'draft':
+      return 1;
+    case 'good':
+      return 2;
+    case 'best':
+      return 4;
+  }
+}
+
+function supportsExport(limit: number | null, width: number, height: number, quality: RenderQuality) {
+  if (!limit) return true;
+  const ssaa = getSsaaMultiplier(quality);
+  return width * ssaa <= limit && height * ssaa <= limit;
+}
+
+function highestSupportedQuality(limit: number | null, width: number, height: number) {
+  for (const preset of QUALITY_ORDER) {
+    if (supportsExport(limit, width, height, preset)) {
+      return preset;
+    }
+  }
+  return null;
+}
+
+export function ExportPanel({ renderer, structureName, onBusyChange }: ExportPanelProps) {
   const [exportType, setExportType] = useState<ExportType>('png');
   const [resolution, setResolution] = useState<Resolution>('1080p');
+  const [quality, setQuality] = useState<RenderQuality>('good');
   const [customWidth, setCustomWidth] = useState(1920);
   const [customHeight, setCustomHeight] = useState(1080);
   const [structureFormat, setStructureFormat] = useState<StructureFormat>('pdb');
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string>('');
+  const [maxTextureDimension, setMaxTextureDimension] = useState<number | null>(null);
+
+  const selectedResolution = useMemo(() => (
+    resolution === 'custom'
+      ? { width: customWidth, height: customHeight, label: 'Custom' }
+      : RESOLUTIONS[resolution]
+  ), [customHeight, customWidth, resolution]);
+
+  const resolutionSupport = useMemo(() => ({
+    '1080p': highestSupportedQuality(maxTextureDimension, RESOLUTIONS['1080p'].width, RESOLUTIONS['1080p'].height),
+    '4k': highestSupportedQuality(maxTextureDimension, RESOLUTIONS['4k'].width, RESOLUTIONS['4k'].height),
+    '8k': highestSupportedQuality(maxTextureDimension, RESOLUTIONS['8k'].width, RESOLUTIONS['8k'].height),
+  }), [maxTextureDimension]);
+
+  const bestQualityForSelection = useMemo(() => (
+    highestSupportedQuality(maxTextureDimension, selectedResolution.width, selectedResolution.height)
+  ), [maxTextureDimension, selectedResolution.height, selectedResolution.width]);
+
+  const qualitySupported = supportsExport(
+    maxTextureDimension,
+    selectedResolution.width,
+    selectedResolution.height,
+    quality,
+  );
+
+  useEffect(() => {
+    if (!renderer) {
+      setMaxTextureDimension(null);
+      return;
+    }
+
+    try {
+      setMaxTextureDimension(renderer.get_max_texture_dimension_2d());
+    } catch {
+      setMaxTextureDimension(null);
+    }
+  }, [renderer]);
+
+  useEffect(() => {
+    if (bestQualityForSelection && !qualitySupported) {
+      setQuality(bestQualityForSelection);
+    }
+  }, [bestQualityForSelection, qualitySupported]);
 
   const handleExportPNG = async () => {
     if (!renderer) return;
 
+    if (!bestQualityForSelection) {
+      setError(
+        maxTextureDimension
+          ? `This GPU export limit is ${maxTextureDimension}px. Lower the resolution before exporting.`
+          : 'This resolution is not supported on the current GPU.',
+      );
+      return;
+    }
+
     setIsExporting(true);
     setError('');
+    onBusyChange?.(true);
 
     try {
-      // Get resolution
-      const res = resolution === 'custom'
-        ? { width: customWidth, height: customHeight }
-        : RESOLUTIONS[resolution];
-
-      // Get the canvas element
-      const canvas = document.querySelector('canvas');
-      if (!canvas) {
-        throw new Error('Canvas not found');
-      }
-
-      // Create a temporary canvas for high-resolution rendering
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = res.width;
-      tempCanvas.height = res.height;
-      const ctx = tempCanvas.getContext('2d');
-
-      if (!ctx) {
-        throw new Error('Could not get canvas context');
-      }
-
-      // Copy current frame to temp canvas (scaled up)
-      ctx.drawImage(canvas, 0, 0, res.width, res.height);
-
-      // Export as PNG
-      tempCanvas.toBlob((blob) => {
-        if (!blob) {
-          setError('Failed to create image');
-          setIsExporting(false);
-          return;
-        }
-
-        // Download
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${structureName || 'molecule'}_${res.width}x${res.height}.png`;
-        a.click();
-        URL.revokeObjectURL(url);
-
-        setIsExporting(false);
-      }, 'image/png');
-
+      const pngBytes = await renderer.export_png(selectedResolution.width, selectedResolution.height, quality);
+      const normalizedBytes = new Uint8Array(pngBytes.byteLength);
+      normalizedBytes.set(pngBytes);
+      const blob = new Blob([normalizedBytes.buffer], { type: 'image/png' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${structureName || 'molecule'}_${selectedResolution.width}x${selectedResolution.height}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Export failed');
+    } finally {
       setIsExporting(false);
+      onBusyChange?.(false);
     }
   };
 
@@ -93,7 +152,6 @@ export function ExportPanel({ renderer, structureName }: ExportPanelProps) {
       let content: string;
       let extension: string;
 
-      // Call appropriate export method
       switch (structureFormat) {
         case 'pdb':
           content = renderer.export_pdb(structureName || 'molecule');
@@ -109,7 +167,6 @@ export function ExportPanel({ renderer, structureName }: ExportPanelProps) {
           break;
       }
 
-      // Download as text file
       const blob = new Blob([content], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -117,10 +174,9 @@ export function ExportPanel({ renderer, structureName }: ExportPanelProps) {
       a.download = `${structureName || 'molecule'}.${extension}`;
       a.click();
       URL.revokeObjectURL(url);
-
-      setIsExporting(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Export failed');
+    } finally {
       setIsExporting(false);
     }
   };
@@ -132,21 +188,16 @@ export function ExportPanel({ renderer, structureName }: ExportPanelProps) {
     setError('');
 
     try {
-      // Get camera state from renderer
       const cameraState = renderer.get_camera_state();
-
-      // Create scene data
       const sceneData = {
         version: '0.3.0',
         timestamp: new Date().toISOString(),
         structureName: structureName || 'molecule',
+        camera: JSON.parse(cameraState),
         cameraState: JSON.parse(cameraState),
-        renderSettings: {
-          // TODO: Add render settings when implemented
-        },
+        renderSettings: {},
       };
 
-      // Download as JSON
       const blob = new Blob([JSON.stringify(sceneData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -154,10 +205,9 @@ export function ExportPanel({ renderer, structureName }: ExportPanelProps) {
       a.download = `${structureName || 'molecule'}_scene.json`;
       a.click();
       URL.revokeObjectURL(url);
-
-      setIsExporting(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Export failed');
+    } finally {
       setIsExporting(false);
     }
   };
@@ -173,20 +223,13 @@ export function ExportPanel({ renderer, structureName }: ExportPanelProps) {
       try {
         const text = await file.text();
         const sceneData = JSON.parse(text);
-
-        // Restore camera state
-        if (sceneData.cameraState) {
-          const cam = sceneData.cameraState;
-          if (cam.eye && cam.target) {
-            renderer.set_camera_position(
-              cam.eye[0], cam.eye[1], cam.eye[2],
-              cam.target[0], cam.target[1], cam.target[2]
-            );
-          }
+        const cam = sceneData.cameraState ?? sceneData.camera;
+        if (cam?.eye && cam?.target) {
+          renderer.set_camera_position(
+            cam.eye[0], cam.eye[1], cam.eye[2],
+            cam.target[0], cam.target[1], cam.target[2],
+          );
         }
-
-        // TODO: Restore render settings when implemented
-
         setError('');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load scene');
@@ -201,7 +244,6 @@ export function ExportPanel({ renderer, structureName }: ExportPanelProps) {
     <div className="export-panel">
       <h3>Export</h3>
 
-      {/* Export type tabs */}
       <div className="export-tabs">
         <button
           className={exportType === 'png' ? 'active' : ''}
@@ -223,22 +265,41 @@ export function ExportPanel({ renderer, structureName }: ExportPanelProps) {
         </button>
       </div>
 
-      {/* Error display */}
       {error && (
         <div className="export-error">{error}</div>
       )}
 
-      {/* PNG export options */}
       {exportType === 'png' && (
         <div className="export-options">
           <div className="form-group">
             <label>Resolution</label>
             <select value={resolution} onChange={(e) => setResolution(e.target.value as Resolution)}>
-              {Object.entries(RESOLUTIONS).map(([key, { label }]) => (
-                <option key={key} value={key}>{label}</option>
-              ))}
+              <option value="1080p">{RESOLUTIONS['1080p'].label}</option>
+              <option value="4k" disabled={!resolutionSupport['4k']}>{RESOLUTIONS['4k'].label}</option>
+              <option value="8k" disabled={!resolutionSupport['8k']}>{RESOLUTIONS['8k'].label}</option>
+              <option value="custom">{RESOLUTIONS.custom.label}</option>
             </select>
           </div>
+
+          <div className="form-group">
+            <label>Quality</label>
+            <select value={quality} onChange={(e) => setQuality(e.target.value as RenderQuality)}>
+              <option value="draft">{QUALITY_LABELS.draft}</option>
+              <option value="good" disabled={!supportsExport(maxTextureDimension, selectedResolution.width, selectedResolution.height, 'good')}>
+                {QUALITY_LABELS.good}
+              </option>
+              <option value="best" disabled={!supportsExport(maxTextureDimension, selectedResolution.width, selectedResolution.height, 'best')}>
+                {QUALITY_LABELS.best}
+              </option>
+            </select>
+          </div>
+
+          {maxTextureDimension && (
+            <p className="scene-description">
+              GPU export limit: {maxTextureDimension}px. Current selection uses {getSsaaMultiplier(quality)}x SSAA.
+              {!bestQualityForSelection && ' Lower the resolution to enable PNG export on this device.'}
+            </p>
+          )}
 
           {resolution === 'custom' && (
             <div className="custom-resolution">
@@ -268,14 +329,13 @@ export function ExportPanel({ renderer, structureName }: ExportPanelProps) {
           <button
             className="export-button primary"
             onClick={handleExportPNG}
-            disabled={isDisabled}
+            disabled={isDisabled || !bestQualityForSelection}
           >
             {isExporting ? 'Exporting...' : 'Export PNG'}
           </button>
         </div>
       )}
 
-      {/* Structure export options */}
       {exportType === 'structure' && (
         <div className="export-options">
           <div className="form-group">
@@ -309,7 +369,6 @@ export function ExportPanel({ renderer, structureName }: ExportPanelProps) {
         </div>
       )}
 
-      {/* Scene export options */}
       {exportType === 'scene' && (
         <div className="export-options">
           <p className="scene-description">

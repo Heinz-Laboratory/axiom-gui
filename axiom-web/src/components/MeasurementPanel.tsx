@@ -38,7 +38,7 @@ export const MeasurementPanel: React.FC<MeasurementPanelProps> = ({ renderer }) 
       if (newMeasurementType === 'distance' && selectedAtoms.length >= 2) {
         // Create distance measurement
         const id = renderer.create_distance_measurement(selectedAtoms[0], selectedAtoms[1]);
-        if (id !== null && id !== undefined) {
+        if (typeof id === 'number' && id >= 0) {
           // Fetch the created measurement from backend
           const measurementsJson = renderer.get_measurements();
           const allMeasurements = JSON.parse(measurementsJson) as Measurement[];
@@ -54,7 +54,7 @@ export const MeasurementPanel: React.FC<MeasurementPanelProps> = ({ renderer }) 
           selectedAtoms[1],
           selectedAtoms[2]
         );
-        if (id !== null && id !== undefined) {
+        if (typeof id === 'number' && id >= 0) {
           // Fetch the created measurement from backend
           const measurementsJson = renderer.get_measurements();
           const allMeasurements = JSON.parse(measurementsJson) as Measurement[];

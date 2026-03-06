@@ -85,13 +85,38 @@ impl WasmRenderer {
         // Convert to molecule
         let molecule = create_molecule(&structure);
 
-        // Create metadata JSON
+        // Count elements (as Record<string, number>)
+        let element_counts = get_element_counts(&molecule);
+        let elements_json = format_element_counts(&element_counts);
+
+        // Format bounds as array [min_x, min_y, min_z, max_x, max_y, max_z]
+        let bounds_json = format!(
+            "[{},{},{},{},{},{}]",
+            molecule.bounds[0], molecule.bounds[1], molecule.bounds[2],
+            molecule.bounds[3], molecule.bounds[4], molecule.bounds[5]
+        );
+
+        // Format cell_params from CIF structure
+        let cell_params_json = format!(
+            r#"{{"a":{},"b":{},"c":{},"alpha":{},"beta":{},"gamma":{}}}"#,
+            structure.cell_lengths[0],
+            structure.cell_lengths[1],
+            structure.cell_lengths[2],
+            structure.cell_angles[0],
+            structure.cell_angles[1],
+            structure.cell_angles[2]
+        );
+
+        // Create metadata JSON matching TypeScript CifMetadata interface
+        // Fields: atom_count, elements (Record<string, number>), bond_count,
+        //         cell_params (optional), space_group (optional), bounds (optional)
         let metadata = format!(
-            r#"{{"atomCount": {}, "elements": {:?}, "bounds": {:?}, "bondCount": {}}}"#,
+            r#"{{"atom_count":{},"elements":{},"bond_count":{},"cell_params":{},"bounds":{}}}"#,
             molecule.atoms.len(),
-            get_unique_elements(&molecule),
-            molecule.bounds,
-            molecule.bonds.len()
+            elements_json,
+            molecule.bonds.len(),
+            cell_params_json,
+            bounds_json
         );
 
         // Convert molecule to GPU geometry
@@ -112,10 +137,13 @@ impl WasmRenderer {
     #[wasm_bindgen]
     pub fn get_structure_info(&self) -> Result<String, JsValue> {
         if let Some(ref molecule) = self.molecule {
+            let element_counts = get_element_counts(molecule);
+            let elements_json = format_element_counts(&element_counts);
+
             let info = format!(
-                r#"{{"atomCount": {}, "elements": {:?}, "bondCount": {}}}"#,
+                r#"{{"atom_count":{},"elements":{},"bond_count":{}}}"#,
                 molecule.atoms.len(),
-                get_unique_elements(molecule),
+                elements_json,
                 molecule.bonds.len()
             );
             Ok(info)
@@ -708,4 +736,24 @@ fn get_unique_elements(molecule: &Molecule) -> Vec<String> {
     elements.sort();
     elements.dedup();
     elements
+}
+
+/// Count atoms by element (for CIF metadata)
+/// Returns a HashMap of element symbol -> count
+fn get_element_counts(molecule: &Molecule) -> std::collections::HashMap<String, usize> {
+    let mut counts = std::collections::HashMap::new();
+    for atom in &molecule.atoms {
+        *counts.entry(atom.element.clone()).or_insert(0) += 1;
+    }
+    counts
+}
+
+/// Format element counts as JSON object (e.g., {"C":20,"H":30,"O":10})
+fn format_element_counts(counts: &std::collections::HashMap<String, usize>) -> String {
+    let mut pairs: Vec<String> = counts
+        .iter()
+        .map(|(elem, count)| format!(r#""{}":{}""#, elem, count))
+        .collect();
+    pairs.sort(); // Sort for deterministic output
+    format!("{{{}}}", pairs.join(","))
 }

@@ -1,10 +1,47 @@
 .camera-controls-panel {
   display: grid;
-  gap: 1rem;
-  color: var(--axiom-text);
+  gap: 16px;
+}
+
+.control-hint {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.control-hint__item {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 50, 68, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(243, 247, 251, 0.88));
+}
+
+.control-hint__item strong {
+  color: var(--text-strong);
+}
+
+.control-hint__item span {
+  color: var(--text-muted);
+  font-size: 0.9rem;
 }
 
 .camera-controls-panel .action-buttons {
   display: grid;
-  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.control-btn {
+  min-height: 48px;
+  border-radius: 18px;
+  padding: 0 16px;
+}
+
+@media (max-width: 760px) {
+  .control-hint,
+  .camera-controls-panel .action-buttons {
+    grid-template-columns: 1fr;
+  }
 }

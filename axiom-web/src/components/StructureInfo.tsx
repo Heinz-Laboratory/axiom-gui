@@ -1,14 +1,4 @@
-import type { CellParameters } from '../types/cif'
-
-interface StructureData {
-  atomCount: number
-  elements: string[]
-  bondCount: number
-  bounds?: number[]
-  cellParams?: CellParameters
-  spaceGroup?: string
-  elementCounts?: Record<string, number>
-}
+import type { StructureData } from '../types/cif'
 
 interface StructureInfoProps {
   data: StructureData | null
@@ -24,11 +14,11 @@ export function StructureInfo({ data, filename }: StructureInfoProps) {
     return (
       <section className="axiom-card structure-panel structure-panel--empty" data-testid="structure-info">
         <div className="section-heading">
-          <span className="section-heading__eyebrow">Scene Intel</span>
+          <span className="section-heading__eyebrow">Scene intel</span>
           <h2>Structure summary</h2>
         </div>
         <p className="section-copy">
-          No structure loaded. Once a file is parsed, Axiom surfaces atom counts, bond counts, cell data, and scene bounds here.
+          No structure loaded. Once parsing completes, Axiom surfaces atom counts, bond counts, cell data, and scene bounds here.
         </p>
       </section>
     )
@@ -41,27 +31,28 @@ export function StructureInfo({ data, filename }: StructureInfoProps) {
   return (
     <section className="axiom-card structure-panel" data-testid="structure-info">
       <div className="section-heading">
-        <span className="section-heading__eyebrow">Scene Intel</span>
+        <span className="section-heading__eyebrow">Scene intel</span>
         <h2>Structure summary</h2>
       </div>
 
       {filename && (
         <div className="structure-panel__filename">
-          <span className="structure-panel__label">File:</span> {filename}
+          <span className="structure-panel__label">File:</span>
+          <strong>{filename}</strong>
         </div>
       )}
 
       <div className="structure-panel__stats">
-        <div className="structure-panel__stat">
-          <span className="structure-panel__label">Atoms:</span>
+        <div className="structure-panel__stat-card">
+          <span className="structure-panel__label">Atoms</span>
           <strong>{data.atomCount.toLocaleString()}</strong>
         </div>
-        <div className="structure-panel__stat">
-          <span className="structure-panel__label">Bonds:</span>
+        <div className="structure-panel__stat-card">
+          <span className="structure-panel__label">Bonds</span>
           <strong>{data.bondCount.toLocaleString()}</strong>
         </div>
-        <div className="structure-panel__stat">
-          <span className="structure-panel__label">Elements:</span>
+        <div className="structure-panel__stat-card">
+          <span className="structure-panel__label">Elements</span>
           <strong>{sortedElements.length.toLocaleString()}</strong>
         </div>
       </div>
@@ -81,7 +72,7 @@ export function StructureInfo({ data, filename }: StructureInfoProps) {
       {data.cellParams && (
         <div className="structure-panel__section">
           <div className="structure-panel__section-title">Unit cell</div>
-          <div className="structure-panel__kv">
+          <div className="structure-panel__kv-grid">
             <span>a = {data.cellParams.a.toFixed(3)} Å</span>
             <span>b = {data.cellParams.b.toFixed(3)} Å</span>
             <span>c = {data.cellParams.c.toFixed(3)} Å</span>
@@ -97,7 +88,7 @@ export function StructureInfo({ data, filename }: StructureInfoProps) {
           <div className="structure-panel__section-title">Scene envelope</div>
 
           {data.spaceGroup && (
-            <div className="structure-panel__stat">
+            <div className="structure-panel__line-item">
               <span className="structure-panel__label">Space Group:</span>
               <strong>{data.spaceGroup}</strong>
             </div>

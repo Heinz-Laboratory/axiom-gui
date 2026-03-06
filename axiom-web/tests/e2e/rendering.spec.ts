@@ -17,7 +17,7 @@ test.describe('Rendering Settings', () => {
     const spacefill = await canvas.screenshot()
     expect(spacefill).not.toEqual(before)
 
-    await page.getByRole('radio', { name: /^stick$/i }).check()
+    await page.getByRole('radio', { name: /^stick\b/i }).check()
     await expectMetric(page, 'mode', /Stick/i)
     await page.waitForTimeout(300)
     const stick = await canvas.screenshot()

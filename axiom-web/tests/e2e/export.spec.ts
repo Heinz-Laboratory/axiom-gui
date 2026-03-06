@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import * as fs from 'node:fs'
 import { PNG } from 'pngjs'
-import { gotoAxiom, loadSampleStructure } from './helpers'
+import { gotoAxiom, loadSampleStructure, openInspectorTab } from './helpers'
 
 function countNonBackgroundPixels(buffer: Buffer, background = { r: 255, g: 255, b: 255, a: 255 }) {
   const png = PNG.sync.read(buffer)
@@ -25,6 +25,7 @@ test.describe('Export Functionality', () => {
   test.beforeEach(async ({ page }) => {
     await gotoAxiom(page)
     await loadSampleStructure(page)
+    await openInspectorTab(page, 'Export')
   })
 
   test('exports a PNG snapshot', async ({ page }) => {

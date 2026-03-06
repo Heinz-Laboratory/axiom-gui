@@ -45,7 +45,7 @@ export function AgentConsolePanel({
   const [history, setHistory] = useState<AgentConsoleEntry[]>([
     {
       role: 'system',
-      text: 'Agent console is wired as a local command bridge today. The target state is a scene-aware backend operator that can manipulate selections, camera, measurements, exports, and repeatable analysis workflows.',
+      text: 'Scene console is a local command bridge today. The target state is a scene-aware backend operator that can manipulate selections, camera, measurements, exports, and repeatable analysis workflows.',
     },
   ])
 
@@ -77,15 +77,13 @@ export function AgentConsolePanel({
   }
 
   return (
-    <section className="axiom-card agent-console" data-testid="agent-console">
+    <section className="agent-console" data-testid="agent-console">
       <div className="agent-console__header">
         <div>
-          <div className="section-heading">
-            <span className="section-heading__eyebrow">Agent Surface</span>
-            <h2>Scene console</h2>
-          </div>
-          <p className="section-copy">
-            VMD-inspired control flow, but web-native and designed for a future backend agent rather than a passive chat box.
+          <span className="agent-console__eyebrow">Agent surface</span>
+          <h3>Scene console</h3>
+          <p>
+            Keep automation adjacent to the viewport: command now, orchestration later.
           </p>
         </div>
         <div className={`agent-console__status ${hasStructure ? 'is-ready' : ''}`}>

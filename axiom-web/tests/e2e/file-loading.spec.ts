@@ -4,6 +4,10 @@ import { fileURLToPath } from 'node:url'
 const quartzFixture = fileURLToPath(new URL('../../public/samples/quartz.cif', import.meta.url))
 const ethanolFixture = fileURLToPath(new URL('../../public/samples/ethanol.xyz', import.meta.url))
 
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 async function expectViewerReady(page: Page) {
   await expect(page.getByTestId('app-shell-header')).toContainText('Axiom Molecular Workbench')
   await expect(page.getByTestId('viewer-canvas')).toBeVisible()
@@ -24,10 +28,10 @@ async function expectStructureSummary(page: Page, checks: {
   contains?: Array<string | RegExp>
 }) {
   const info = page.getByTestId('structure-info')
-  await expect(info).toContainText(`File: ${checks.file}`)
-  await expect(info).toContainText(new RegExp(`Atoms:\\s*${checks.atoms}`))
+  await expect(info).toContainText(new RegExp(`File:\\s*${escapeRegex(checks.file)}`))
+  await expect(info).toContainText(new RegExp(`Atoms\\s*:?\\s*${checks.atoms}`))
   if (typeof checks.bonds === 'number') {
-    await expect(info).toContainText(new RegExp(`Bonds:\\s*${checks.bonds}`))
+    await expect(info).toContainText(new RegExp(`Bonds\\s*:?\\s*${checks.bonds}`))
   }
 
   for (const item of checks.contains ?? []) {

@@ -16,9 +16,9 @@ import { useCameraAnimation } from '../hooks/useCameraAnimation'
 import { SUPPORTED_STRUCTURE_ACCEPT, structureMetadataToStructureData, type StructureData, type StructureMetadata } from '../types/cif'
 import './MoleculeViewer.css'
 
-const ExportPanel = lazy(() => import('./ExportPanel').then(m => ({ default: m.ExportPanel })))
-const MeasurementPanel = lazy(() => import('./MeasurementPanel').then(m => ({ default: m.MeasurementPanel })))
-const CameraPresetsPanel = lazy(() => import('./CameraPresetsPanel').then(m => ({ default: m.CameraPresetsPanel })))
+const ExportPanel = lazy(() => import('./ExportPanel').then((m) => ({ default: m.ExportPanel })))
+const MeasurementPanel = lazy(() => import('./MeasurementPanel').then((m) => ({ default: m.MeasurementPanel })))
+const CameraPresetsPanel = lazy(() => import('./CameraPresetsPanel').then((m) => ({ default: m.CameraPresetsPanel })))
 
 interface MoleculeViewerProps {
   showKeyboardHelp: boolean
@@ -27,6 +27,7 @@ interface MoleculeViewerProps {
 
 type StructureFormat = 'cif' | 'pdb' | 'xyz'
 type DragMode = 'rotate' | 'pan'
+type InspectorTab = 'render' | 'camera' | 'measure' | 'export' | 'agent'
 
 interface PickResult {
   atomIndex: number
@@ -40,6 +41,14 @@ const QUICK_RENDER_MODES = [
   { key: 'stick', label: 'Stick' },
   { key: 'wireframe', label: 'Wireframe' },
 ] as const
+
+const INSPECTOR_TABS: Array<{ key: InspectorTab; label: string; description: string }> = [
+  { key: 'render', label: 'Render', description: 'Appearance and performance' },
+  { key: 'camera', label: 'Camera', description: 'Views and navigation' },
+  { key: 'measure', label: 'Measure', description: 'Selections and geometry' },
+  { key: 'export', label: 'Export', description: 'Images and structures' },
+  { key: 'agent', label: 'Agent', description: 'Scene automation surface' },
+]
 
 function detectStructureFormat(filename: string): StructureFormat | null {
   const lower = filename.toLowerCase()
@@ -91,7 +100,7 @@ function parsePickResult(raw: unknown): PickResult | null {
 
 function summarizeElements(data: StructureData | null) {
   if (!data?.elementCounts) {
-    return 'No elemental breakdown yet'
+    return 'No elemental profile yet'
   }
 
   return Object.entries(data.elementCounts)
@@ -105,6 +114,31 @@ function formatStructureFormat(filename: string) {
   const format = detectStructureFormat(filename)
   if (!format) return 'Unknown format'
   return format.toUpperCase()
+}
+
+function describeInspectorTab(tab: InspectorTab, hasStructure: boolean) {
+  switch (tab) {
+    case 'render':
+      return hasStructure
+        ? 'Tune representation, lighting, and background without leaving the stage.'
+        : 'Appearance controls will unlock once a structure is loaded.'
+    case 'camera':
+      return hasStructure
+        ? 'Save views, fit the model, and keep direct manipulation discoverable.'
+        : 'Camera tools become useful after the first structure is loaded.'
+    case 'measure':
+      return hasStructure
+        ? 'Create distance and angle measurements from the active selection.'
+        : 'Load a structure first to start measuring geometry.'
+    case 'export':
+      return hasStructure
+        ? 'Export imagery, structure files, and shareable scene state from one place.'
+        : 'Exports appear once there is an active scene to capture.'
+    case 'agent':
+      return hasStructure
+        ? 'Use the conversational surface for scene commands and future automation.'
+        : 'The agent surface is ready, but it needs a structure context.'
+  }
 }
 
 export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: MoleculeViewerProps) {
@@ -129,6 +163,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null)
   const [isPinching, setIsPinching] = useState(false)
   const [initialPinchDistance, setInitialPinchDistance] = useState(0)
+  const [activeInspectorTab, setActiveInspectorTab] = useState<InspectorTab>('render')
 
   const { settings, applyToRenderer, updateRenderMode } = useRenderSettings()
   const {
@@ -147,6 +182,13 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
 
   useCameraAnimation(rendererRef, isAnimating, () => setIsAnimating(false))
 
+  function openInspectorTab(tab: InspectorTab, nextStatus?: string) {
+    setActiveInspectorTab(tab)
+    if (nextStatus) {
+      setStatusMessage(nextStatus)
+    }
+  }
+
   function renderCurrentFrame() {
     if (!rendererRef.current || rendererBusyRef.current) return
 
@@ -158,6 +200,8 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
   }
 
   function applyNamedRenderMode(mode: 'ball-and-stick' | 'spacefill' | 'stick' | 'wireframe') {
+    openInspectorTab('render')
+
     switch (mode) {
       case 'ball-and-stick':
         updateRenderMode({ type: 'ball-and-stick', atomScale: 1.0, bondRadius: 0.15 })
@@ -209,6 +253,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
   function handleSelectAllAtoms() {
     if (!rendererRef.current || !structureData) return
 
+    openInspectorTab('measure')
     selectAllAtoms(structureData.atomCount)
     rendererRef.current.clear_selection()
     for (let i = 0; i < structureData.atomCount; i += 1) {
@@ -238,18 +283,14 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
     {
       key: 's',
       ctrl: true,
-      handler: () => {
-        setStatusMessage('Export panel is available in the right rail')
-      },
+      handler: () => openInspectorTab('export', 'Export panel is available in the inspector'),
       description: 'Save structure',
       category: 'file' as const,
     },
     {
       key: 'e',
       ctrl: true,
-      handler: () => {
-        setStatusMessage('Export panel is available in the right rail')
-      },
+      handler: () => openInspectorTab('export', 'Export panel is available in the inspector'),
       description: 'Export',
       category: 'file' as const,
     },
@@ -305,6 +346,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
     {
       key: 'm',
       handler: () => {
+        openInspectorTab('measure')
         setMeasurementMode(!measurementMode)
         setStatusMessage(`Measurement mode ${!measurementMode ? 'enabled' : 'disabled'}`)
       },
@@ -401,6 +443,23 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
     handleResize()
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    function handleNativeWheel(event: WheelEvent) {
+      event.preventDefault()
+      if (!rendererRef.current) return
+
+      const delta = event.deltaY * 0.01
+      rendererRef.current.zoom(delta)
+      renderCurrentFrame()
+    }
+
+    canvas.addEventListener('wheel', handleNativeWheel, { passive: false })
+    return () => canvas.removeEventListener('wheel', handleNativeWheel)
   }, [])
 
   function handleFileLoad(content: string, sourceName: string, displayName = sourceName) {
@@ -504,14 +563,6 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
     setIsDragging(false)
   }
 
-  function handleWheel(e: React.WheelEvent<HTMLCanvasElement>) {
-    e.preventDefault()
-    if (!rendererRef.current) return
-
-    const delta = e.deltaY * -0.01
-    rendererRef.current.zoom(delta)
-  }
-
   function handleCanvasClick(e: React.MouseEvent<HTMLCanvasElement>) {
     if (didDragRef.current) {
       didDragRef.current = false
@@ -528,6 +579,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
 
     if (pick) {
       const atomIndex = pick.atomIndex
+      openInspectorTab('measure')
 
       if (e.ctrlKey || e.metaKey) {
         toggleAtomSelection(atomIndex)
@@ -557,6 +609,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
 
   function handlePresetClick(preset: string) {
     try {
+      openInspectorTab('camera')
       setIsAnimating(true)
       rendererRef.current?.animate_to_preset(preset, 400)
       setStatusMessage(`Animating to ${preset} preset`)
@@ -566,13 +619,14 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
     }
   }
 
-  function handleSavePreset(name: string, state: { position: [number, number, number], target: [number, number, number], up: [number, number, number], fov: number }) {
+  function handleSavePreset(name: string, state: { position: [number, number, number]; target: [number, number, number]; up: [number, number, number]; fov: number }) {
     savePreset(name, state)
     setStatusMessage(`Saved preset ${name}`)
   }
 
-  function handleLoadPreset(state: { position: [number, number, number], target: [number, number, number], up: [number, number, number], fov: number }) {
+  function handleLoadPreset(state: { position: [number, number, number]; target: [number, number, number]; up: [number, number, number]; fov: number }) {
     try {
+      openInspectorTab('camera')
       setIsAnimating(true)
       rendererRef.current?.animate_camera_to(
         state.position[0], state.position[1], state.position[2],
@@ -720,6 +774,22 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
     ]
   }, [renderModeLabel, selectedAtoms.length, structureData])
 
+  const sceneMeta = useMemo(() => {
+    if (!structureData) {
+      return [
+        { label: 'Format', value: structureFormatLabel },
+        { label: 'State', value: 'Awaiting structure' },
+        { label: 'Workflow', value: 'Load a sample or local file' },
+      ]
+    }
+
+    return [
+      { label: 'Format', value: structureFormatLabel },
+      { label: 'Elements', value: structureData.elements.length.toLocaleString() },
+      { label: 'Space group', value: structureData.spaceGroup ?? 'Not specified' },
+    ]
+  }, [structureData, structureFormatLabel])
+
   if (error) {
     return (
       <div className="axiom-error-screen">
@@ -748,71 +818,107 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
         }}
       />
 
-      <div className="axiom-layout">
-        <aside className="axiom-sidebar axiom-sidebar--left">
-          <section className="axiom-card app-identity" data-testid="app-shell-header">
-            <div className="section-heading section-heading--hero">
-              <span className="section-heading__eyebrow">Headless-first molecular analysis workspace</span>
-              <h1>Axiom Molecular Workbench</h1>
-            </div>
+      <header className="workbench-header">
+        <div className="workbench-header__identity" data-testid="app-shell-header">
+          <span className="section-heading__eyebrow">Light-first molecular analysis workbench</span>
+          <div className="workbench-header__title-row">
+            <h1>Axiom Molecular Workbench</h1>
+            <span className="status-pill status-pill--accent">Scientific preview</span>
+          </div>
+          <p>
+            A calmer web lab for structure ingestion, scene inspection, render QA, and future agent-native manipulation.
+          </p>
+        </div>
 
-            <p className="app-identity__lede">
-              VMD-inspired scene control for web-native structure inspection, render QA, and future agent-driven workflows.
+        <div className="workbench-header__scene-summary" aria-live="polite">
+          <div className="summary-chip">
+            <span>Scene</span>
+            <strong>{structureData ? stageTitle : 'Awaiting structure'}</strong>
+          </div>
+          <div className="summary-chip">
+            <span>Status</span>
+            <strong>{structureData ? 'Ready' : 'Idle'}</strong>
+          </div>
+          <div className="summary-chip">
+            <span>Format</span>
+            <strong>{structureFormatLabel}</strong>
+          </div>
+        </div>
+
+        <div className="workbench-header__actions">
+          <button type="button" className="primary-action" onClick={() => fileInputRef.current?.click()}>
+            Open structure
+          </button>
+          <button type="button" className="secondary-action" onClick={handleFitToView} disabled={!structureData}>
+            Fit to view
+          </button>
+          <button
+            type="button"
+            className={`secondary-action ${showKeyboardHelp ? 'is-active' : ''}`}
+            aria-pressed={showKeyboardHelp}
+            onClick={() => setShowKeyboardHelp(true)}
+          >
+            Help
+          </button>
+        </div>
+      </header>
+
+      {fileError && (
+        <div className="status-banner status-banner--error status-banner--global" data-testid="file-load-error" role="alert">
+          {fileError}
+        </div>
+      )}
+
+      <div className="workbench-grid">
+        <aside className="workbench-rail workbench-rail--left">
+          <section className="axiom-card session-overview">
+            <div className="section-heading">
+              <span className="section-heading__eyebrow">Session overview</span>
+              <h2>{structureData ? 'Active analysis state' : 'Load a structure to begin'}</h2>
+            </div>
+            <p className="section-copy">
+              {structureData
+                ? 'The left rail handles intake and structure context. The stage remains reserved for direct scene work.'
+                : 'Start with a vetted sample or a local file. Once loaded, the inspector unlocks scene controls, measurements, exports, and agent actions.'}
             </p>
-
-            <div className="app-identity__status-row" aria-live="polite">
-              <span className="status-pill">WebGPU ready</span>
-              <span className={`status-pill ${structureData ? 'status-pill--accent' : ''}`}>
-                {structureData ? 'Scene loaded' : 'Awaiting structure'}
-              </span>
-              <span className="status-pill">{structureFormatLabel}</span>
+            <div className="session-overview__meta">
+              {sceneMeta.map((item) => (
+                <div key={item.label} className="session-overview__meta-item">
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </div>
+              ))}
             </div>
-
-            <div className="app-identity__actions">
-              <button type="button" className="primary-action" onClick={() => fileInputRef.current?.click()}>
-                Open structure
+            <div className="session-overview__actions">
+              <button type="button" className="secondary-action" onClick={() => openInspectorTab('agent')}>
+                Open agent surface
               </button>
-              <button type="button" className="secondary-action" onClick={handleFitToView} disabled={!structureData}>
-                Fit to view
-              </button>
-              <button
-                type="button"
-                className={`secondary-action ${showKeyboardHelp ? 'is-active' : ''}`}
-                aria-pressed={showKeyboardHelp}
-                onClick={() => setShowKeyboardHelp(true)}
-              >
-                Help
+              <button type="button" className="secondary-action" onClick={() => openInspectorTab('export')} disabled={!structureData}>
+                Prepare export
               </button>
             </div>
           </section>
 
           <SampleFileDropdown onLoadSample={handleSampleLoad} />
           <FileUpload onFileLoad={handleFileLoad} />
-
-          {fileError && (
-            <div className="status-banner status-banner--error" data-testid="file-load-error" role="alert">
-              {fileError}
-            </div>
-          )}
-
           <StructureInfo data={structureData} filename={filename} />
         </aside>
 
-        <main className="axiom-stage" id="viewer-stage">
-          <section className="axiom-card stage-brief">
-            <div>
+        <main className="workbench-stage" id="viewer-stage">
+          <section className="axiom-card stage-toolbar">
+            <div className="stage-toolbar__primary">
               <div className="section-heading">
                 <span className="section-heading__eyebrow">Viewport</span>
                 <h2>{stageTitle}</h2>
               </div>
               <p className="section-copy">
                 {structureData
-                  ? 'Inspect the active structure, manipulate the camera directly, and validate representation changes before exporting.'
-                  : 'Load a sample or local structure file to start scene inspection.'}
+                  ? 'Use the viewer for direct inspection and keep secondary tasks in the inspector tabs.'
+                  : 'Load a sample or local structure file to activate the molecular stage.'}
               </p>
             </div>
 
-            <div className="stage-brief__modes" aria-label="Quick render modes">
+            <div className="stage-toolbar__modes" aria-label="Quick render modes">
               {QUICK_RENDER_MODES.map((mode) => {
                 const isActive = getRenderModeKey(settings.renderMode) === mode.key
                 return (
@@ -828,10 +934,31 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
                 )
               })}
             </div>
+
+            <div className="stage-toolbar__actions">
+              <button
+                type="button"
+                className={`secondary-action ${measurementMode ? 'is-active' : ''}`}
+                aria-pressed={measurementMode}
+                onClick={() => {
+                  openInspectorTab('measure')
+                  setMeasurementMode(!measurementMode)
+                  setStatusMessage(`Measurement mode ${!measurementMode ? 'enabled' : 'disabled'}`)
+                }}
+              >
+                Measurement mode
+              </button>
+              <button type="button" className="secondary-action" onClick={() => openInspectorTab('export')} disabled={!structureData}>
+                Export
+              </button>
+              <button type="button" className="secondary-action" onClick={() => openInspectorTab('agent')}>
+                Agent
+              </button>
+            </div>
           </section>
 
-          <section className="stage-canvas-shell" data-testid="viewer-stage">
-            <div className="stage-canvas-shell__backdrop" />
+          <section className="stage-board" data-testid="viewer-stage">
+            <div className="stage-board__paper" />
 
             {isLoading && (
               <div className="loading-overlay">
@@ -847,28 +974,34 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
               </div>
             )}
 
-            <div className="stage-hud stage-hud--top-left">
-              <span className="stage-hud__eyebrow">Active scene</span>
+            <div className="stage-note stage-note--top-left">
+              <span className="stage-note__label">Scene</span>
               <strong>{stageTitle}</strong>
               <span>{dominantElementSummary}</span>
             </div>
 
-            <div className="stage-hud stage-hud--top-right">
-              <span className="stage-hud__eyebrow">Session state</span>
+            <div className="stage-note stage-note--top-right">
+              <span className="stage-note__label">Status</span>
               <strong data-testid="status-message">{statusMessage}</strong>
               <span data-testid="measurement-mode-state">
                 {measurementMode ? 'Measurement mode enabled' : 'Direct manipulation enabled'}
               </span>
             </div>
 
-            <div className="stage-hud stage-hud--bottom-left">
-              <span className="stage-hud__eyebrow">Viewport gestures</span>
-              <strong>{dragMode === 'pan' && isDragging ? 'Panning scene' : dragMode === 'rotate' && isDragging ? 'Rotating scene' : 'Ready for input'}</strong>
+            <div className="stage-note stage-note--bottom-left">
+              <span className="stage-note__label">Gestures</span>
+              <strong>
+                {dragMode === 'pan' && isDragging
+                  ? 'Panning scene'
+                  : dragMode === 'rotate' && isDragging
+                    ? 'Rotating scene'
+                    : 'Ready for input'}
+              </strong>
               <span>Left drag rotate · Right or middle drag pan · Scroll zoom</span>
             </div>
 
-            <div className="stage-hud stage-hud--bottom-right">
-              <span className="stage-hud__eyebrow">Scene metrics</span>
+            <div className="stage-note stage-note--bottom-right">
+              <span className="stage-note__label">Scene metrics</span>
               {sceneStats.length > 0 ? (
                 <div className="stage-metrics">
                   {sceneStats.map((stat) => (
@@ -887,9 +1020,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
               )}
             </div>
 
-            {structureData && (
-              <MeasurementOverlay canvasRef={canvasRef} renderer={rendererRef.current} />
-            )}
+            {structureData && <MeasurementOverlay canvasRef={canvasRef} renderer={rendererRef.current} />}
 
             <canvas
               ref={canvasRef}
@@ -899,7 +1030,6 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
-              onWheel={handleWheel}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
@@ -910,47 +1040,105 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
           </section>
         </main>
 
-        <aside className="axiom-sidebar axiom-sidebar--right">
-          <AgentConsolePanel
-            hasStructure={structureData !== null}
-            filename={filename}
-            structureData={structureData}
-            selectedCount={selectedAtoms.length}
-            measurementMode={measurementMode}
-            onRunCommand={handleAgentCommand}
-          />
+        <aside className="workbench-rail workbench-rail--right">
+          <section className="axiom-card inspector-shell">
+            <div className="inspector-shell__header">
+              <div>
+                <span className="section-heading__eyebrow">Inspector</span>
+                <h2>{INSPECTOR_TABS.find((tab) => tab.key === activeInspectorTab)?.label}</h2>
+              </div>
+              <div className={`status-pill ${structureData ? 'status-pill--accent' : ''}`}>
+                {structureData ? 'Scene loaded' : 'Awaiting structure'}
+              </div>
+            </div>
 
-          <RenderSettingsPanel />
+            <p className="section-copy inspector-shell__copy">
+              {describeInspectorTab(activeInspectorTab, Boolean(structureData))}
+            </p>
 
-          <Suspense fallback={<Skeleton variant="rectangular" height={160} />}>
-            <CameraPresetsPanel
-              onPresetClick={handlePresetClick}
-              onSavePreset={handleSavePreset}
-              onLoadPreset={handleLoadPreset}
-              getCurrentState={getCurrentCameraState}
-              customPresets={customPresets}
-              onDeletePreset={deletePreset}
-            />
-          </Suspense>
+            <div className="inspector-tabs" role="tablist" aria-label="Inspector sections">
+              {INSPECTOR_TABS.map((tab) => {
+                const isActive = tab.key === activeInspectorTab
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    className={`inspector-tab ${isActive ? 'is-active' : ''}`}
+                    onClick={() => setActiveInspectorTab(tab.key)}
+                  >
+                    <span>{tab.label}</span>
+                    <small>{tab.description}</small>
+                  </button>
+                )
+              })}
+            </div>
 
-          <CameraControlsPanel
-            onReset={handleCameraReset}
-            onFitToView={handleFitToView}
-          />
+            <div className="inspector-shell__panel">
+              {activeInspectorTab === 'render' && <RenderSettingsPanel />}
 
-          {structureData && (
-          <Suspense fallback={<Skeleton variant="rectangular" height={220} />}>
-            <MeasurementPanel renderer={rendererRef.current} />
-            <ExportPanel
-              renderer={rendererRef.current}
-              structureName={filename || 'molecule'}
-              onBusyChange={(busy) => {
-                rendererBusyRef.current = busy
-                setStatusMessage(busy ? 'Exporting image...' : 'Renderer ready')
-              }}
-            />
-          </Suspense>
-        )}
+              {activeInspectorTab === 'camera' && (
+                <div className="inspector-stack">
+                  <Suspense fallback={<Skeleton variant="rectangular" height={200} />}>
+                    <CameraPresetsPanel
+                      onPresetClick={handlePresetClick}
+                      onSavePreset={handleSavePreset}
+                      onLoadPreset={handleLoadPreset}
+                      getCurrentState={getCurrentCameraState}
+                      customPresets={customPresets}
+                      onDeletePreset={deletePreset}
+                    />
+                  </Suspense>
+                  <CameraControlsPanel onReset={handleCameraReset} onFitToView={handleFitToView} />
+                </div>
+              )}
+
+              {activeInspectorTab === 'measure' && (
+                structureData ? (
+                  <Suspense fallback={<Skeleton variant="rectangular" height={220} />}>
+                    <MeasurementPanel renderer={rendererRef.current} />
+                  </Suspense>
+                ) : (
+                  <div className="empty-panel-state">
+                    <strong>No geometry tools yet</strong>
+                    <span>Load a structure to enable selection and measurement workflows.</span>
+                  </div>
+                )
+              )}
+
+              {activeInspectorTab === 'export' && (
+                structureData ? (
+                  <Suspense fallback={<Skeleton variant="rectangular" height={220} />}>
+                    <ExportPanel
+                      renderer={rendererRef.current}
+                      structureName={filename || 'molecule'}
+                      onBusyChange={(busy) => {
+                        rendererBusyRef.current = busy
+                        setStatusMessage(busy ? 'Exporting image...' : 'Renderer ready')
+                      }}
+                    />
+                  </Suspense>
+                ) : (
+                  <div className="empty-panel-state">
+                    <strong>No export target</strong>
+                    <span>Load a structure before exporting imagery, structure files, or scene state.</span>
+                  </div>
+                )
+              )}
+
+              {activeInspectorTab === 'agent' && (
+                <AgentConsolePanel
+                  hasStructure={structureData !== null}
+                  filename={filename}
+                  structureData={structureData}
+                  selectedCount={selectedAtoms.length}
+                  measurementMode={measurementMode}
+                  onRunCommand={handleAgentCommand}
+                />
+              )}
+            </div>
+          </section>
         </aside>
       </div>
     </div>

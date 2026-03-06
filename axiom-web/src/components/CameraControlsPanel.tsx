@@ -5,32 +5,39 @@ interface CameraControlsProps {
   onFitToView: () => void
 }
 
-export function CameraControlsPanel({
-  onReset,
-  onFitToView,
-}: CameraControlsProps) {
+export function CameraControlsPanel({ onReset, onFitToView }: CameraControlsProps) {
   return (
-    <div className="camera-controls-panel">
-      <h3>Camera Controls</h3>
+    <section className="camera-controls-panel">
+      <div className="panel-header">
+        <div>
+          <span className="panel-eyebrow">Navigation</span>
+          <h3>Camera controls</h3>
+        </div>
+      </div>
 
       <div className="control-hint">
-        <p>Use the viewport directly:</p>
-        <ul>
-          <li><strong>Left drag</strong> - Rotate view</li>
-          <li><strong>Right or middle drag</strong> - Pan</li>
-          <li><strong>Scroll</strong> - Zoom in or out</li>
-        </ul>
+        <div className="control-hint__item">
+          <strong>Rotate</strong>
+          <span>Left drag on the viewport</span>
+        </div>
+        <div className="control-hint__item">
+          <strong>Pan</strong>
+          <span>Right or middle drag</span>
+        </div>
+        <div className="control-hint__item">
+          <strong>Zoom</strong>
+          <span>Mouse wheel or trackpad scroll</span>
+        </div>
       </div>
 
-      {/* Action buttons */}
       <div className="action-buttons">
         <button className="control-btn fit-btn" onClick={onFitToView} title="Center and fit structure to view">
-          🎯 Fit to View
+          Fit to View
         </button>
         <button className="control-btn reset-btn" onClick={onReset} title="Reset camera to default position">
-          🔄 Reset
+          Reset
         </button>
       </div>
-    </div>
+    </section>
   )
 }

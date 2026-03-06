@@ -20,7 +20,7 @@ test('recovers from stale render settings persisted in localStorage', async ({ p
   await page.getByRole('button', { name: /load example structure/i }).click()
   await page.getByText('Water (CIF)', { exact: true }).click()
 
-  await expect(page.getByTestId('structure-info')).toContainText('File: Water (CIF)')
-  await expect(page.getByTestId('structure-info')).toContainText(/Atoms:\s*3/)
+  await expect(page.getByTestId('structure-info')).toContainText(/File:\s*Water \(CIF\)/)
+  await expect(page.getByTestId('structure-info')).toContainText(/Atoms\s*:?\s*3/)
   await expect(page.locator('body')).not.toContainText('Something went wrong')
 })

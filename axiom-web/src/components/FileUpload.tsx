@@ -6,7 +6,7 @@ interface FileUploadProps {
   accept?: string
 }
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024
 
 export function FileUpload({ onFileLoad, accept = SUPPORTED_STRUCTURE_ACCEPT }: FileUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -49,33 +49,6 @@ export function FileUpload({ onFileLoad, accept = SUPPORTED_STRUCTURE_ACCEPT }: 
     e.target.value = ''
   }
 
-  function handleClick() {
-    fileInputRef.current?.click()
-  }
-
-  function handleDragOver(e: React.DragEvent) {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(true)
-  }
-
-  function handleDragLeave(e: React.DragEvent) {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(false)
-  }
-
-  function handleDrop(e: React.DragEvent) {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(false)
-
-    const file = e.dataTransfer.files?.[0]
-    if (file) {
-      validateAndReadFile(file)
-    }
-  }
-
   return (
     <section className="axiom-card file-ingest" data-testid="file-upload-panel">
       <div className="section-heading">
@@ -84,7 +57,7 @@ export function FileUpload({ onFileLoad, accept = SUPPORTED_STRUCTURE_ACCEPT }: 
       </div>
 
       <p className="section-copy">
-        Load crystallographic, biomolecular, or coordinate-only files directly into the active scene.
+        Drag a structure into the workspace or browse from disk. CIF, PDB, and XYZ are handled through the same entry point.
       </p>
 
       <input
@@ -98,17 +71,39 @@ export function FileUpload({ onFileLoad, accept = SUPPORTED_STRUCTURE_ACCEPT }: 
       <button
         type="button"
         className={`file-ingest__dropzone ${isDragging ? 'is-dragging' : ''}`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={handleClick}
+        onDragOver={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          setIsDragging(true)
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          setIsDragging(false)
+        }}
+        onDrop={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          setIsDragging(false)
+          const file = e.dataTransfer.files?.[0]
+          if (file) {
+            validateAndReadFile(file)
+          }
+        }}
+        onClick={() => fileInputRef.current?.click()}
       >
+        <span className="file-ingest__icon">Drop zone</span>
         <span className="file-ingest__label">
-          {isDragging ? 'Drop structure file here' : 'Drag and drop structure file'}
+          {isDragging ? 'Release to load structure' : 'Drag and drop structure file'}
         </span>
         <span className="file-ingest__caption">or click to browse from this machine</span>
-        <span className="file-ingest__formats">Accepted: {accept}</span>
       </button>
+
+      <div className="file-ingest__formats" aria-label="Accepted file formats">
+        {accept.split(',').map((format) => (
+          <span key={format} className="inline-token">{format}</span>
+        ))}
+      </div>
 
       {error && (
         <div
@@ -119,7 +114,7 @@ export function FileUpload({ onFileLoad, accept = SUPPORTED_STRUCTURE_ACCEPT }: 
         </div>
       )}
 
-      <div className="section-footnote">Max recommended file size: 10 MB</div>
+      <div className="section-footnote">Recommended ceiling: 10 MB for the smoothest in-browser parse cycle.</div>
     </section>
   )
 }

@@ -4,6 +4,7 @@ interface SampleFile {
   name: string
   path: string
   description: string
+  category: string
 }
 
 interface SampleFileDropdownProps {
@@ -14,49 +15,56 @@ const SAMPLE_FILES: SampleFile[] = [
   {
     name: 'Water (CIF)',
     path: '/samples/water.cif',
-    description: 'Crystallographic water reference · 3 atoms',
+    description: 'Crystallographic sanity check · 3 atoms',
+    category: 'Crystal',
   },
   {
     name: 'Water (XYZ)',
     path: '/samples/water.xyz',
-    description: 'Minimal coordinate-only structure · 3 atoms',
+    description: 'Coordinate-only reference · 3 atoms',
+    category: 'Coordinate',
   },
   {
     name: 'Benzene (C₆H₆)',
     path: '/samples/benzene.cif',
-    description: 'Aromatic ring sanity check · 12 atoms',
+    description: 'Aromatic ring reference · 12 atoms',
+    category: 'Organic',
   },
   {
     name: 'Ethanol (XYZ)',
     path: '/samples/ethanol.xyz',
-    description: 'Small organic molecule with inferred bonds · 9 atoms',
+    description: 'Small-molecule XYZ with inferred bonds · 9 atoms',
+    category: 'Coordinate',
   },
   {
     name: 'Quartz (SiO₂)',
     path: '/samples/quartz.cif',
-    description: 'Cell-aware crystal structure · 9 atoms',
+    description: 'Unit-cell-aware crystal example · 9 atoms',
+    category: 'Crystal',
   },
   {
     name: 'Crambin (1CRN PDB)',
     path: '/samples/1crn.pdb',
-    description: 'Protein example from RCSB · 327 atoms',
+    description: 'Protein reference from RCSB · 327 atoms',
+    category: 'Protein',
   },
 ]
 
 function getFormatLabel(path: string): string {
-  const extension = path.split('.').pop()?.toUpperCase()
-  return extension ?? 'FILE'
+  return path.split('.').pop()?.toUpperCase() ?? 'FILE'
 }
 
 export function SampleFileDropdown({ onLoadSample }: SampleFileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const groupedSamples = useMemo(() => SAMPLE_FILES, [])
 
   async function handleSelectSample(sample: SampleFile) {
     setIsOpen(false)
     setIsLoading(true)
+    setError(null)
 
     try {
       const response = await fetch(sample.path)
@@ -67,7 +75,7 @@ export function SampleFileDropdown({ onLoadSample }: SampleFileDropdownProps) {
       onLoadSample(content, sample.name, sample.path)
     } catch (err) {
       console.error('Failed to load sample:', err)
-      alert(`Failed to load sample file: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      setError(`Failed to load sample file: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setIsLoading(false)
     }
@@ -76,12 +84,12 @@ export function SampleFileDropdown({ onLoadSample }: SampleFileDropdownProps) {
   return (
     <section className="axiom-card sample-library" data-testid="sample-library">
       <div className="section-heading">
-        <span className="section-heading__eyebrow">Reference Set</span>
+        <span className="section-heading__eyebrow">Reference structures</span>
         <h2>Load a vetted sample</h2>
       </div>
 
       <p className="section-copy">
-        Use known-good structures to validate parsing, camera behavior, and render-mode changes before loading live data.
+        Use known-good examples to verify parsing, camera behavior, and rendering before moving into live lab files.
       </p>
 
       <button
@@ -106,11 +114,20 @@ export function SampleFileDropdown({ onLoadSample }: SampleFileDropdownProps) {
             >
               <span className="sample-library__item-head">
                 <span className="sample-library__name">{sample.name}</span>
-                <span className="sample-library__format">{getFormatLabel(sample.path)}</span>
+                <span className="sample-library__badges">
+                  <span className="sample-library__category">{sample.category}</span>
+                  <span className="sample-library__format">{getFormatLabel(sample.path)}</span>
+                </span>
               </span>
               <span className="sample-library__description">{sample.description}</span>
             </button>
           ))}
+        </div>
+      )}
+
+      {error && (
+        <div className="status-banner status-banner--error" role="alert">
+          {error}
         </div>
       )}
     </section>

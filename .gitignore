@@ -31,6 +31,7 @@ src-tauri/Cargo.lock
 # Rust
 **/*.rs.bk
 *.pdb
+!axiom-web/public/samples/*.pdb
 
 # Build artifacts
 dist/

@@ -129,66 +129,66 @@ export function Sidebar() {
         />
 
         {/* Divider */}
-        {recentFilesHook.recentFiles.length > 0 && (
+        {recentFilesHook.recentFiles.length > 0 ? (
           <div className="border-t border-border" />
-        )}
+        ) : null}
 
         {/* File Info */}
         <FileInfoPanel />
 
         {/* Divider */}
-        {fileInfo && <div className="border-t border-border" />}
+        {fileInfo ? <div className="border-t border-border" /> : null}
 
         {/* Rendering Controls */}
         <RenderControls />
 
         {/* Divider */}
-        {atoms && <div className="border-t border-border" />}
+        {atoms ? <div className="border-t border-border" /> : null}
 
         {/* Rendering Settings (Phase 3) */}
-        {atoms && <RenderingSettingsPanel />}
+        {atoms ? <RenderingSettingsPanel /> : null}
 
         {/* Divider */}
-        {atoms && <div className="border-t border-border" />}
+        {atoms ? <div className="border-t border-border" /> : null}
 
         {/* Camera Controls */}
-        {atoms && <CameraControls />}
+        {atoms ? <CameraControls /> : null}
 
         {/* Divider */}
-        {atoms && <div className="border-t border-border" />}
+        {atoms ? <div className="border-t border-border" /> : null}
 
         {/* Atom Selection & Measurements (Phase 4) */}
-        {atoms && <AtomSelectionPanel />}
+        {atoms ? <AtomSelectionPanel /> : null}
 
         {/* Divider */}
-        {atoms && <div className="border-t border-border" />}
+        {atoms ? <div className="border-t border-border" /> : null}
 
         {/* Atom Picker (Phase 4) */}
-        {atoms && <AtomPicker />}
+        {atoms ? <AtomPicker /> : null}
 
         {/* Divider */}
-        {atoms && <div className="border-t border-border" />}
+        {atoms ? <div className="border-t border-border" /> : null}
 
         {/* Selection Panel (semantic query-based) */}
-        {atoms && <SelectionPanel />}
+        {atoms ? <SelectionPanel /> : null}
 
         {/* Divider */}
-        {atoms && <div className="border-t border-border" />}
+        {atoms ? <div className="border-t border-border" /> : null}
 
         {/* Export Panel (Phase 5) */}
-        {atoms && <ExportPanel />}
+        {atoms ? <ExportPanel /> : null}
 
         {/* Divider */}
-        {atoms && <div className="border-t border-border" />}
+        {atoms ? <div className="border-t border-border" /> : null}
 
         {/* Performance Metrics Panel (Phase 6) */}
-        {atoms && <PerformanceMetricsPanel />}
+        {atoms ? <PerformanceMetricsPanel /> : null}
 
         {/* Divider */}
-        {atoms && <div className="border-t border-border" />}
+        {atoms ? <div className="border-t border-border" /> : null}
 
         {/* Stats Panel */}
-        {atoms && <StatsPanel />}
+        {atoms ? <StatsPanel /> : null}
       </div>
     </aside>
   )

@@ -11,8 +11,8 @@ export function FileInfoPanel() {
   const { fileInfo, atoms, stats } = useAxiomStore()
   const [expanded, setExpanded] = useState(true)
 
-  // Don't render if no file loaded
-  if (!fileInfo || !atoms) {
+  // Don't render if no file loaded or data is invalid
+  if (!fileInfo || !atoms || !fileInfo.name || !fileInfo.format || !fileInfo.path) {
     return null
   }
 

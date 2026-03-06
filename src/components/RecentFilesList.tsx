@@ -55,35 +55,42 @@ export function RecentFilesList({
       </div>
 
       <div className="space-y-1">
-        {recentFiles.map((file) => (
-          <div
-            key={file.path}
-            className="group flex items-center gap-2 p-2 rounded hover:bg-accent cursor-pointer transition-colors"
-            onClick={() => onFileSelect(file)}
-          >
-            <FileIcon size={14} className="text-muted-foreground flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-medium truncate" title={file.name}>
-                {file.name}
-              </div>
-              <div className="text-xs text-muted-foreground truncate" title={file.path}>
-                {file.format.toUpperCase()} • {formatRelativeTime(file.timestamp)}
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => {
-                e.stopPropagation()
-                onFileRemove(file.path)
-              }}
-              title="Remove from recent files"
+        {recentFiles.map((file) => {
+          // Validate file data before rendering
+          if (!file || !file.path || !file.name || !file.format || typeof file.timestamp !== 'number') {
+            return null
+          }
+
+          return (
+            <div
+              key={file.path}
+              className="group flex items-center gap-2 p-2 rounded hover:bg-accent cursor-pointer transition-colors"
+              onClick={() => onFileSelect(file)}
             >
-              <XIcon size={12} />
-            </Button>
-          </div>
-        ))}
+              <FileIcon size={14} className="text-muted-foreground flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium truncate" title={file.name}>
+                  {file.name}
+                </div>
+                <div className="text-xs text-muted-foreground truncate" title={file.path}>
+                  {file.format.toUpperCase()} • {formatRelativeTime(file.timestamp)}
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onFileRemove(file.path)
+                }}
+                title="Remove from recent files"
+              >
+                <XIcon size={12} />
+              </Button>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

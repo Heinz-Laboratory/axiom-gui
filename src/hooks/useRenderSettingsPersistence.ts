@@ -16,10 +16,18 @@ export function useRenderSettingsPersistence() {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
         const parsed = JSON.parse(stored)
-        setRenderSettings(parsed)
+        // Validate that parsed is an object and has expected properties
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          setRenderSettings(parsed)
+        } else {
+          console.warn('Invalid render settings in localStorage, clearing')
+          localStorage.removeItem(STORAGE_KEY)
+        }
       }
     } catch (error) {
       console.error('Failed to load render settings from localStorage:', error)
+      // Clear corrupted data
+      localStorage.removeItem(STORAGE_KEY)
     }
   }, [setRenderSettings])
 

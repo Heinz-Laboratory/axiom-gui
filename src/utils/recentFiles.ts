@@ -13,13 +13,37 @@ export function loadRecentFiles(): RecentFile[] {
 
     const files = JSON.parse(stored) as RecentFile[]
     // Validate structure
-    if (!Array.isArray(files)) return []
+    if (!Array.isArray(files)) {
+      console.warn('Invalid recent files format in localStorage, clearing')
+      localStorage.removeItem(RECENT_FILES_KEY)
+      return []
+    }
 
-    return files.filter(f =>
-      f.path && f.name && f.format && typeof f.timestamp === 'number'
-    )
+    // Validate each file has required properties
+    const validFiles = files.filter(f => {
+      const isValid = f &&
+        typeof f === 'object' &&
+        typeof f.path === 'string' &&
+        typeof f.name === 'string' &&
+        typeof f.format === 'string' &&
+        typeof f.timestamp === 'number'
+
+      if (!isValid) {
+        console.warn('Skipping invalid recent file entry:', f)
+      }
+      return isValid
+    })
+
+    // If we filtered out invalid entries, save the cleaned list
+    if (validFiles.length !== files.length) {
+      saveRecentFiles(validFiles)
+    }
+
+    return validFiles
   } catch (error) {
     console.error('Failed to load recent files:', error)
+    // Clear corrupted data
+    localStorage.removeItem(RECENT_FILES_KEY)
     return []
   }
 }

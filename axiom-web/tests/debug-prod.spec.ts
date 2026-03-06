@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Debug production site', async ({ page }) => {
+test('Debug production site', async ({ page }, testInfo) => {
   // Capture console messages
   const consoleMessages: string[] = [];
   page.on('console', msg => {
@@ -24,7 +24,10 @@ test('Debug production site', async ({ page }) => {
   await page.waitForTimeout(5000);
 
   // Take screenshot
-  await page.screenshot({ path: '/home/agent/axiom-production-debug.png', fullPage: true });
+  await page.screenshot({
+    path: testInfo.outputPath('axiom-production-debug.png'),
+    fullPage: true,
+  });
   console.log('\n=== Screenshot saved ===');
 
   // Check for error message

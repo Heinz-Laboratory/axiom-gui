@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import path from 'node:path';
 
 (async () => {
   const browser = await chromium.launch({
@@ -41,8 +42,9 @@ import { chromium } from 'playwright';
   const bodyText = await page.textContent('body');
   console.log('Page status:', bodyText.includes('Renderer Error') ? '❌ ERROR' : '✅ OK');
 
-  await page.screenshot({ path: '/home/agent/axiom-webgl-test.png', fullPage: true });
-  console.log('Screenshot saved to /home/agent/axiom-webgl-test.png');
+  const screenshotPath = path.resolve('test-results/axiom-webgl-test.png');
+  await page.screenshot({ path: screenshotPath, fullPage: true });
+  console.log(`Screenshot saved to ${screenshotPath}`);
 
   await browser.close();
 })();

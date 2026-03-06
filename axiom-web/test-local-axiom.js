@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import path from 'node:path';
 
 (async () => {
   const browser = await chromium.launch({
@@ -40,8 +41,9 @@ import { chromium } from 'playwright';
     console.log(bodyText.substring(0, 500));
   }
 
-  await page.screenshot({ path: '/home/agent/axiom-local-test.png', fullPage: true });
-  console.log('\nScreenshot: /home/agent/axiom-local-test.png');
+  const screenshotPath = path.resolve('test-results/axiom-local-test.png');
+  await page.screenshot({ path: screenshotPath, fullPage: true });
+  console.log(`\nScreenshot: ${screenshotPath}`);
 
   console.log('\n=== Console Logs ===');
   logs.forEach((log, i) => console.log(`${i + 1}. ${log}`));

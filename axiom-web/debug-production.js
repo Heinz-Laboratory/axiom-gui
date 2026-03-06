@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import path from 'node:path';
 
 (async () => {
   const browser = await chromium.launch({ headless: true });
@@ -51,8 +52,10 @@ import { chromium } from 'playwright';
   console.log(bodyText.substring(0, 500));
 
   // Take screenshot
-  await page.screenshot({ path: '/home/agent/axiom-production-debug.png', fullPage: true });
+  const screenshotPath = path.resolve('test-results/axiom-production-debug.png');
+  await page.screenshot({ path: screenshotPath, fullPage: true });
   console.log('\n=== Screenshot saved ===');
+  console.log(screenshotPath);
 
   // Summary
   console.log('\n=== SUMMARY ===');

@@ -46,6 +46,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
   const rendererRef = useRef<WasmRenderer | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
+  const [fileError, setFileError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingStructure, setIsLoadingStructure] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -311,12 +312,13 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
   // Handle CIF file load
   function handleFileLoad(content: string, fname: string) {
     if (!rendererRef.current) {
-      setError('Renderer not initialized')
+      setFileError('Renderer not initialized')
       return
     }
 
     setIsLoadingStructure(true)
     setError(null)
+    setFileError(null)
 
     // Use setTimeout to allow loading spinner to render
     setTimeout(() => {
@@ -339,15 +341,38 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
         setStructureData(structureData)
         setFilename(fname)
         setError(null)
+        setFileError(null)
 
         console.log('CIF loaded:', structureData)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load CIF file')
+        setFileError(err instanceof Error ? err.message : 'Failed to load CIF file')
         console.error('CIF load error:', err)
       } finally {
         setIsLoadingStructure(false)
       }
     }, 50)
+  }
+
+  function handleShortcutFileSelection(file: File) {
+    const extension = '.' + (file.name.split('.').pop()?.toLowerCase() ?? '')
+    if (extension !== '.cif') {
+      setFileError('Invalid file type. Expected .cif')
+      return
+    }
+
+    setFileError(null)
+
+    const reader = new FileReader()
+    reader.onload = (evt) => {
+      const content = evt.target?.result as string
+      if (content) {
+        handleFileLoad(content, file.name)
+      }
+    }
+    reader.onerror = () => {
+      setFileError('Failed to read file')
+    }
+    reader.readAsText(file)
   }
 
   // Handle sample file load
@@ -580,14 +605,7 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
         onChange={(e) => {
           const file = e.target.files?.[0]
           if (file) {
-            const reader = new FileReader()
-            reader.onload = (evt) => {
-              const content = evt.target?.result as string
-              if (content) {
-                handleFileLoad(content, file.name)
-              }
-            }
-            reader.readAsText(file)
+            handleShortcutFileSelection(file)
           }
           // Reset input so the same file can be loaded again
           e.target.value = ''
@@ -702,6 +720,23 @@ export function MoleculeViewer({ showKeyboardHelp, setShowKeyboardHelp }: Molecu
 
         <SampleFileDropdown onLoadSample={handleSampleLoad} />
         <FileUpload onFileLoad={handleFileLoad} />
+        {fileError && (
+          <div
+            data-testid="file-load-error"
+            style={{
+              marginBottom: '20px',
+              padding: '10px',
+              background: '#4a1a1a',
+              borderRadius: '4px',
+              fontSize: '12px',
+              color: '#ff6666',
+              fontFamily: 'monospace',
+              border: '1px solid #661111',
+            }}
+          >
+            {fileError}
+          </div>
+        )}
         <StructureInfo data={structureData} filename={filename} />
         <RenderSettingsPanel />
         <Suspense fallback={<Skeleton variant="rectangular" height={120} />}>

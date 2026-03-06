@@ -1,11 +1,44 @@
 // axiom-renderer/src/wasm.rs
 // WASM bindings for JavaScript (only compiles for wasm32 target)
 
-use wasm_bindgen::prelude::*;
-use web_sys::HtmlCanvasElement;
-use crate::{Renderer, AtomData, MoleculeGeometry, Camera};
+use std::collections::{BTreeMap, HashMap};
+
 use crate::cif_parser::parse_cif;
 use crate::molecule::{create_molecule, Molecule};
+use crate::{AtomData, Camera, MoleculeGeometry, Renderer};
+use serde::Serialize;
+use wasm_bindgen::prelude::*;
+use web_sys::HtmlCanvasElement;
+
+#[derive(Serialize)]
+struct CellParameters {
+    a: f32,
+    b: f32,
+    c: f32,
+    alpha: f32,
+    beta: f32,
+    gamma: f32,
+}
+
+#[derive(Serialize)]
+struct CifMetadata {
+    atom_count: usize,
+    elements: BTreeMap<String, usize>,
+    bond_count: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    cell_params: Option<CellParameters>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    space_group: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    bounds: Option<[f32; 6]>,
+}
+
+#[derive(Serialize)]
+struct StructureInfo {
+    atom_count: usize,
+    elements: BTreeMap<String, usize>,
+    bond_count: usize,
+}
 
 #[wasm_bindgen]
 pub struct WasmRenderer {
@@ -33,7 +66,8 @@ impl WasmRenderer {
 
     #[wasm_bindgen]
     pub async fn initialize(&mut self, canvas: HtmlCanvasElement) -> Result<(), JsValue> {
-        let renderer = Renderer::new(canvas).await
+        let renderer = Renderer::new(canvas)
+            .await
             .map_err(|e| JsValue::from_str(&e))?;
         self.inner = Some(renderer);
         Ok(())
@@ -41,15 +75,16 @@ impl WasmRenderer {
 
     #[wasm_bindgen]
     pub fn render(&mut self, _atoms_js: JsValue) -> Result<(), JsValue> {
-        let renderer = self.inner.as_mut()
+        let renderer = self
+            .inner
+            .as_mut()
             .ok_or_else(|| JsValue::from_str("Renderer not initialized"))?;
 
         // For now, accept an empty array since we don't have serde_wasm_bindgen
         // Full implementation will deserialize atoms from JavaScript
         let atoms: Vec<AtomData> = vec![];
 
-        renderer.render(&atoms)
-            .map_err(|e| JsValue::from_str(&e))?;
+        renderer.render(&atoms).map_err(|e| JsValue::from_str(&e))?;
         Ok(())
     }
 
@@ -85,39 +120,24 @@ impl WasmRenderer {
         // Convert to molecule
         let molecule = create_molecule(&structure);
 
-        // Count elements (as Record<string, number>)
-        let element_counts = get_element_counts(&molecule);
-        let elements_json = format_element_counts(&element_counts);
+        let metadata = CifMetadata {
+            atom_count: molecule.atoms.len(),
+            elements: sorted_element_counts(&molecule),
+            bond_count: molecule.bonds.len(),
+            cell_params: Some(CellParameters {
+                a: structure.cell_lengths[0],
+                b: structure.cell_lengths[1],
+                c: structure.cell_lengths[2],
+                alpha: structure.cell_angles[0],
+                beta: structure.cell_angles[1],
+                gamma: structure.cell_angles[2],
+            }),
+            space_group: None,
+            bounds: Some(molecule.bounds),
+        };
 
-        // Format bounds as array [min_x, min_y, min_z, max_x, max_y, max_z]
-        let bounds_json = format!(
-            "[{},{},{},{},{},{}]",
-            molecule.bounds[0], molecule.bounds[1], molecule.bounds[2],
-            molecule.bounds[3], molecule.bounds[4], molecule.bounds[5]
-        );
-
-        // Format cell_params from CIF structure
-        let cell_params_json = format!(
-            r#"{{"a":{},"b":{},"c":{},"alpha":{},"beta":{},"gamma":{}}}"#,
-            structure.cell_lengths[0],
-            structure.cell_lengths[1],
-            structure.cell_lengths[2],
-            structure.cell_angles[0],
-            structure.cell_angles[1],
-            structure.cell_angles[2]
-        );
-
-        // Create metadata JSON matching TypeScript CifMetadata interface
-        // Fields: atom_count, elements (Record<string, number>), bond_count,
-        //         cell_params (optional), space_group (optional), bounds (optional)
-        let metadata = format!(
-            r#"{{"atom_count":{},"elements":{},"bond_count":{},"cell_params":{},"bounds":{}}}"#,
-            molecule.atoms.len(),
-            elements_json,
-            molecule.bonds.len(),
-            cell_params_json,
-            bounds_json
-        );
+        let metadata = serde_json::to_string(&metadata)
+            .map_err(|e| JsValue::from_str(&format!("Failed to serialize CIF metadata: {}", e)))?;
 
         // Convert molecule to GPU geometry
         let geometry = MoleculeGeometry::from_molecule(&molecule);
@@ -137,16 +157,15 @@ impl WasmRenderer {
     #[wasm_bindgen]
     pub fn get_structure_info(&self) -> Result<String, JsValue> {
         if let Some(ref molecule) = self.molecule {
-            let element_counts = get_element_counts(molecule);
-            let elements_json = format_element_counts(&element_counts);
+            let info = StructureInfo {
+                atom_count: molecule.atoms.len(),
+                elements: sorted_element_counts(molecule),
+                bond_count: molecule.bonds.len(),
+            };
 
-            let info = format!(
-                r#"{{"atom_count":{},"elements":{},"bond_count":{}}}"#,
-                molecule.atoms.len(),
-                elements_json,
-                molecule.bonds.len()
-            );
-            Ok(info)
+            serde_json::to_string(&info).map_err(|e| {
+                JsValue::from_str(&format!("Failed to serialize structure info: {}", e))
+            })
         } else {
             Err(JsValue::from_str("No structure loaded"))
         }
@@ -190,9 +209,15 @@ impl WasmRenderer {
             // Export camera parameters as JSON
             let state = format!(
                 r#"{{"eye":[{},{},{}],"target":[{},{},{}],"up":[{},{},{}],"fovy":{}}}"#,
-                camera.eye.x, camera.eye.y, camera.eye.z,
-                camera.target.x, camera.target.y, camera.target.z,
-                camera.up.x, camera.up.y, camera.up.z,
+                camera.eye.x,
+                camera.eye.y,
+                camera.eye.z,
+                camera.target.x,
+                camera.target.y,
+                camera.target.z,
+                camera.up.x,
+                camera.up.y,
+                camera.up.z,
                 camera.fovy
             );
             Ok(state)
@@ -223,8 +248,15 @@ impl WasmRenderer {
 
     /// Set camera position directly (for scene restoration)
     #[wasm_bindgen]
-    pub fn set_camera_position(&mut self, eye_x: f32, eye_y: f32, eye_z: f32,
-                               target_x: f32, target_y: f32, target_z: f32) -> Result<(), JsValue> {
+    pub fn set_camera_position(
+        &mut self,
+        eye_x: f32,
+        eye_y: f32,
+        eye_z: f32,
+        target_x: f32,
+        target_y: f32,
+        target_z: f32,
+    ) -> Result<(), JsValue> {
         if let Some(ref mut renderer) = self.inner {
             renderer.camera.eye = glam::Vec3::new(eye_x, eye_y, eye_z);
             renderer.camera.target = glam::Vec3::new(target_x, target_y, target_z);
@@ -260,7 +292,11 @@ impl WasmRenderer {
             "draft" => crate::export::RenderQuality::Draft,
             "good" => crate::export::RenderQuality::Good,
             "best" => crate::export::RenderQuality::Best,
-            _ => return Err(JsValue::from_str("Invalid quality preset. Use 'draft', 'good', or 'best'")),
+            _ => {
+                return Err(JsValue::from_str(
+                    "Invalid quality preset. Use 'draft', 'good', or 'best'",
+                ))
+            }
         };
 
         // Validate resolution
@@ -302,14 +338,11 @@ impl WasmRenderer {
             &settings,
             &selection,
             &measurements,
-        ).map_err(|e| JsValue::from_str(&format!("Scene export failed: {}", e)))?;
+        )
+        .map_err(|e| JsValue::from_str(&format!("Scene export failed: {}", e)))?;
 
         // Wrap in a container with the structure name
-        let container = format!(
-            r#"{{"name": "{}", "scene": {}}}"#,
-            name,
-            scene_json
-        );
+        let container = format!(r#"{{"name": "{}", "scene": {}}}"#, name, scene_json);
 
         Ok(container)
     }
@@ -381,15 +414,13 @@ impl WasmRenderer {
     #[wasm_bindgen]
     pub fn set_quality(&mut self, ssaa: u32, ao_samples: u32) -> Result<(), JsValue> {
         if let Some(ref mut renderer) = self.inner {
-            use crate::config::{QualitySettings, QualityPreset};
+            use crate::config::{QualityPreset, QualitySettings};
 
             // Validate SSAA
-            QualitySettings::validate_ssaa(ssaa)
-                .map_err(|e| JsValue::from_str(&e))?;
+            QualitySettings::validate_ssaa(ssaa).map_err(|e| JsValue::from_str(&e))?;
 
             // Validate AO samples
-            QualitySettings::validate_ao_samples(ao_samples)
-                .map_err(|e| JsValue::from_str(&e))?;
+            QualitySettings::validate_ao_samples(ao_samples).map_err(|e| JsValue::from_str(&e))?;
 
             renderer.config.quality = QualitySettings {
                 preset: QualityPreset::Custom,
@@ -413,7 +444,12 @@ impl WasmRenderer {
                 "draft" => QualitySettings::draft(),
                 "good" => QualitySettings::good(),
                 "best" => QualitySettings::best(),
-                _ => return Err(JsValue::from_str(&format!("Invalid quality preset: {}. Use 'draft', 'good', or 'best'", preset))),
+                _ => {
+                    return Err(JsValue::from_str(&format!(
+                        "Invalid quality preset: {}. Use 'draft', 'good', or 'best'",
+                        preset
+                    )))
+                }
             };
 
             Ok(())
@@ -425,7 +461,12 @@ impl WasmRenderer {
     /// Set lighting parameters (Blinn-Phong)
     /// Values are 0.0 - 1.0 (will be clamped)
     #[wasm_bindgen]
-    pub fn set_lighting(&mut self, ambient: f32, diffuse: f32, specular: f32) -> Result<(), JsValue> {
+    pub fn set_lighting(
+        &mut self,
+        ambient: f32,
+        diffuse: f32,
+        specular: f32,
+    ) -> Result<(), JsValue> {
         if let Some(ref mut renderer) = self.inner {
             use crate::config::LightingSettings;
 
@@ -460,18 +501,30 @@ impl WasmRenderer {
             let config = &renderer.config;
 
             let mode_json = match &config.render_mode {
-                crate::config::RenderMode::BallAndStick { atom_scale, bond_radius } => {
-                    format!(r#"{{"type":"ball-and-stick","atomScale":{},"bondRadius":{}}}"#, atom_scale, bond_radius)
-                },
+                crate::config::RenderMode::BallAndStick {
+                    atom_scale,
+                    bond_radius,
+                } => {
+                    format!(
+                        r#"{{"type":"ball-and-stick","atomScale":{},"bondRadius":{}}}"#,
+                        atom_scale, bond_radius
+                    )
+                }
                 crate::config::RenderMode::Spacefill { vdw_scale } => {
                     format!(r#"{{"type":"spacefill","vdwScale":{}}}"#, vdw_scale)
-                },
-                crate::config::RenderMode::Stick { atom_radius, bond_radius } => {
-                    format!(r#"{{"type":"stick","atomRadius":{},"bondRadius":{}}}"#, atom_radius, bond_radius)
-                },
+                }
+                crate::config::RenderMode::Stick {
+                    atom_radius,
+                    bond_radius,
+                } => {
+                    format!(
+                        r#"{{"type":"stick","atomRadius":{},"bondRadius":{}}}"#,
+                        atom_radius, bond_radius
+                    )
+                }
                 crate::config::RenderMode::Wireframe { line_width } => {
                     format!(r#"{{"type":"wireframe","lineWidth":{}}}"#, line_width)
-                },
+                }
             };
 
             let preset_str = match config.quality.preset {
@@ -556,7 +609,14 @@ impl WasmRenderer {
     pub fn get_selection(&self) -> JsValue {
         if let Some(ref renderer) = self.inner {
             let selection = renderer.get_selection();
-            let json = format!("[{}]", selection.iter().map(|i| i.to_string()).collect::<Vec<_>>().join(","));
+            let json = format!(
+                "[{}]",
+                selection
+                    .iter()
+                    .map(|i| i.to_string())
+                    .collect::<Vec<_>>()
+                    .join(",")
+            );
             JsValue::from_str(&json)
         } else {
             JsValue::from_str("[]")
@@ -579,7 +639,10 @@ impl WasmRenderer {
     #[wasm_bindgen]
     pub fn create_distance_measurement(&mut self, atom1: usize, atom2: usize) -> i32 {
         if let Some(ref mut renderer) = self.inner {
-            renderer.create_distance_measurement(atom1, atom2).map(|id| id as i32).unwrap_or(-1)
+            renderer
+                .create_distance_measurement(atom1, atom2)
+                .map(|id| id as i32)
+                .unwrap_or(-1)
         } else {
             -1
         }
@@ -589,7 +652,10 @@ impl WasmRenderer {
     #[wasm_bindgen]
     pub fn create_angle_measurement(&mut self, atom1: usize, atom2: usize, atom3: usize) -> i32 {
         if let Some(ref mut renderer) = self.inner {
-            renderer.create_angle_measurement(atom1, atom2, atom3).map(|id| id as i32).unwrap_or(-1)
+            renderer
+                .create_angle_measurement(atom1, atom2, atom3)
+                .map(|id| id as i32)
+                .unwrap_or(-1)
         } else {
             -1
         }
@@ -616,7 +682,9 @@ impl WasmRenderer {
                     crate::measurement::MeasurementType::Angle => "Angle",
                 };
 
-                let indices_str = m.atom_indices.iter()
+                let indices_str = m
+                    .atom_indices
+                    .iter()
                     .map(|i| i.to_string())
                     .collect::<Vec<_>>()
                     .join(",");
@@ -650,11 +718,13 @@ impl WasmRenderer {
     /// Animate camera to a preset view (front, back, left, right, top, bottom)
     #[wasm_bindgen]
     pub fn animate_to_preset(&mut self, preset: &str, duration_ms: f32) -> Result<(), JsValue> {
-        use crate::camera::CameraPreset;
         use crate::animation::EasingFunction;
+        use crate::camera::CameraPreset;
         use glam::Vec3;
 
-        let renderer = self.inner.as_mut()
+        let renderer = self
+            .inner
+            .as_mut()
             .ok_or_else(|| JsValue::from_str("Renderer not initialized"))?;
 
         let preset_enum = match preset {
@@ -668,7 +738,8 @@ impl WasmRenderer {
         };
 
         // Get molecule bounding box
-        let geometry = renderer.get_geometry()
+        let geometry = renderer
+            .get_geometry()
             .ok_or_else(|| JsValue::from_str("No structure loaded"))?;
 
         let center_arr = geometry.center();
@@ -706,7 +777,9 @@ impl WasmRenderer {
         use crate::animation::EasingFunction;
         use glam::Vec3;
 
-        let renderer = self.inner.as_mut()
+        let renderer = self
+            .inner
+            .as_mut()
             .ok_or_else(|| JsValue::from_str("Renderer not initialized"))?;
 
         let end_pos = Vec3::new(pos_x, pos_y, pos_z);
@@ -727,33 +800,16 @@ impl WasmRenderer {
     }
 }
 
-/// Get unique element symbols from molecule
-fn get_unique_elements(molecule: &Molecule) -> Vec<String> {
-    let mut elements: Vec<String> = molecule.atoms
-        .iter()
-        .map(|a| a.element.clone())
-        .collect();
-    elements.sort();
-    elements.dedup();
-    elements
-}
-
-/// Count atoms by element (for CIF metadata)
-/// Returns a HashMap of element symbol -> count
-fn get_element_counts(molecule: &Molecule) -> std::collections::HashMap<String, usize> {
-    let mut counts = std::collections::HashMap::new();
+/// Count atoms by element
+fn get_element_counts(molecule: &Molecule) -> HashMap<String, usize> {
+    let mut counts = HashMap::new();
     for atom in &molecule.atoms {
         *counts.entry(atom.element.clone()).or_insert(0) += 1;
     }
     counts
 }
 
-/// Format element counts as JSON object (e.g., {"C":20,"H":30,"O":10})
-fn format_element_counts(counts: &std::collections::HashMap<String, usize>) -> String {
-    let mut pairs: Vec<String> = counts
-        .iter()
-        .map(|(elem, count)| format!(r#""{}":{}""#, elem, count))
-        .collect();
-    pairs.sort(); // Sort for deterministic output
-    format!("{{{}}}", pairs.join(","))
+/// Convert element counts to a sorted map for deterministic JSON output
+fn sorted_element_counts(molecule: &Molecule) -> BTreeMap<String, usize> {
+    get_element_counts(molecule).into_iter().collect()
 }

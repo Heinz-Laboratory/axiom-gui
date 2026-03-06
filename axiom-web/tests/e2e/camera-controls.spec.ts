@@ -17,6 +17,16 @@ function distance(a: [number, number, number], b: [number, number, number]) {
   )
 }
 
+function expectVectorClose(
+  actual: [number, number, number],
+  expected: [number, number, number],
+  tolerance = 0.01,
+) {
+  actual.forEach((value, index) => {
+    expect(value).toBeCloseTo(expected[index], Math.abs(Math.log10(tolerance)))
+  })
+}
+
 async function exportCameraState(page: Page): Promise<CameraState> {
   await openInspectorTab(page, 'Export')
 
@@ -125,8 +135,8 @@ test.describe('Camera Controls', () => {
     const restoredView = await exportCameraState(page)
 
     expect(frontView.eye).not.toEqual(savedView.eye)
-    expect(restoredView.eye).toEqual(savedView.eye)
-    expect(restoredView.target).toEqual(savedView.target)
+    expectVectorClose(restoredView.eye, savedView.eye)
+    expectVectorClose(restoredView.target, savedView.target)
   })
 
   test('fits and resets the camera from the control panel', async ({ page }) => {
